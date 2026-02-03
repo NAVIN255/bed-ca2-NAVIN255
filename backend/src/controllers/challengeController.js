@@ -94,6 +94,13 @@ module.exports.createNewChallenge = (req, res, next) =>
         return;
     }
 
+    if(!res.locals.userId) {
+        res.status(401).json({
+            message: "User ID not found in token"
+        });
+        return;
+    }
+
     const data = {
         challenge: req.body.challenge,
         creator_id: res.locals.userId,
@@ -103,7 +110,7 @@ module.exports.createNewChallenge = (req, res, next) =>
     const callback = (error, results, fields) =>
     {
         if(error){
-            console.error("Error createNewChallenge:", error);
+            console.error("Error creating challenge:", error);
             res.status(500).json(error);
         }
         else{

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Magical Wellness Challenge</title>
+    <link rel="stylesheet" href="css/magical-theme.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card fade-in">
+            <div class="auth-header">
+                <h1 class="auth-title">🔮 Magical Wellness Challenge</h1>
+                <p class="auth-subtitle">Create your magical identity</p>
+            </div>
+
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">🧙‍♀️ Magical Username</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Choose your magical name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">✨ Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="Enter your magical email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">🔐 Secret Spell</label>
+                    <div class="password-input-group">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Create your secret spell" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                    </div>
+                    <div id="passwordStrength" class="password-strength"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-full">
+                    <span class="btn-text">🌟 Join the Magical Realm</span>
+                </button>
+            </form>
+
+            <div id="msg" class="auth-message"></div>
+
+            <div class="auth-footer">
+                <p>Already a magical being? <a href="index.html" class="auth-link">🏰 Enter the realm</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Utility Scripts -->
+    <script src="js/utils/domUtils.js"></script>
+    <script src="js/utils/validation.js"></script>
+    <script src="js/utils/formatUtils.js"></script>
+    <script src="js/utils/errorHandler.js"></script>
+    <script src="js/services/APIService.js"></script>
+    <script src="js/register.js"></script>
+
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-md);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--spacing-2xl);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .auth-subtitle {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .auth-form {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .password-input-group {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: var(--spacing-sm);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.6;
+            transition: opacity var(--transition-fast);
+        }
+
+        .password-toggle:hover {
+            opacity: 1;
+        }
+
+        .password-strength {
+            margin-top: var(--spacing-sm);
+            font-size: 0.75rem;
+        }
+
+        .strength-weak { color: var(--error-color); }
+        .strength-fair { color: var(--warning-color); }
+        .strength-good { color: var(--info-color); }
+        .strength-strong { color: var(--success-color); }
+
+        .auth-message {
+            text-align: center;
+            margin: var(--spacing-md) 0;
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        .auth-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .auth-message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .auth-footer {
+            text-align: center;
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .auth-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // Password strength indicator
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (!password) {
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            const strength = ValidationUtils.getPasswordStrength(password);
+            strengthDiv.innerHTML = `
+                <div class="strength-${strength.class}">
+                    Password strength: ${strength.text}
+                    ${strength.feedback && strength.feedback.length > 0 ? 
+                        '<br><small>' + strength.feedback.join(', ') + '</small>' : ''}
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

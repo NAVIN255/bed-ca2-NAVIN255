@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Property Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .test-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-failure {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-running {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        #output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Frontend Property-Based Tests</h1>
+    <p>Testing correctness properties for the Wellness Challenge frontend integration.</p>
+    
+    <div>
+        <button id="runApiTests" onclick="runAPITests()">Run API Service Tests</button>
+        <button id="runAllTests" onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <h3>Test Output:</h3>
+    <div id="output"></div>
+
+    <!-- Load test dependencies -->
+    <script src="setup.js"></script>
+    <script src="../js/utils/domUtils.js"></script>
+    <script src="../js/utils/validation.js"></script>
+    <script src="../js/utils/formatUtils.js"></script>
+    <script src="../js/utils/errorHandler.js"></script>
+    <script src="../js/services/APIService.js"></script>
+    
+    <script>
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const output = document.getElementById('output');
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const formattedMessage = `[${timestamp}] ${message}`;
+            
+            if (type === 'error') {
+                output.textContent += `ERROR: ${formattedMessage}\n`;
+                originalError(message);
+            } else {
+                output.textContent += `${formattedMessage}\n`;
+                originalLog(message);
+            }
+            
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        console.log = log;
+        console.error = (message) => log(message, 'error');
+        
+        function addResult(testName, success, details = '') {
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'test-success' : 'test-failure'}`;
+            div.innerHTML = `
+                <strong>${testName}</strong>: ${success ? 'PASSED' : 'FAILED'}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            results.appendChild(div);
+        }
+        
+        function setRunning(testName) {
+            const div = document.createElement('div');
+            div.className = 'test-result test-running';
+            div.innerHTML = `<strong>${testName}</strong>: Running...`;
+            div.id = 'running-test';
+            results.appendChild(div);
+        }
+        
+        function clearRunning() {
+            const running = document.getElementById('running-test');
+            if (running) running.remove();
+        }
+        
+        async function runAPITests() {
+            const button = document.getElementById('runApiTests');
+            button.disabled = true;
+            
+            try {
+                setRunning('API Service Property Tests');
+                
+                // Property 29: Data modification sync
+                log('Testing Property 29: Data modification sync');
+                const syncResult = await testDataModificationSync();
+                clearRunning();
+                addResult('Property 29: Data modification sync', syncResult.success, 
+                    `${syncResult.passed}/${syncResult.passed + syncResult.failed} iterations passed`);
+                
+                // Property 30: Fresh data loading
+                setRunning('Property 30: Fresh data loading');
+                log('Testing Property 30: Fresh data loading');
+                const loadResult = await testFreshDataLoading();
+                clearRunning();
+                addResult('Property 30: Fresh data loading', loadResult.success,
+                    `${loadResult.passed}/${loadResult.passed + loadResult.failed} iterations passed`);
+                
+                log(`API Service tests completed. Overall success: ${syncResult.success && loadResult.success}`);
+                
+            } catch (error) {
+                clearRunning();
+                log(`Test execution failed: ${error.message}`, 'error');
+                addResult('API Service Tests', false, error.message);
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        async function testDataModificationSync() {
+            return TestUtils.runPropertyTest(
+                'Data modification sync',
+                async () => {
+                    // Generate random challenge data
+                    const challengeData = {
+                        challenge: TestUtils.randomString(20),
+                        skillpoints: TestUtils.randomNumber(1, 100)
+                    };
+                    
+                    let apiCallMade = false;
+                    
+                    // Mock fetch to track API calls
+                    const originalFetch = window.fetch;
+                    window.fetch = (url, options) => {
+                        if (options && options.method === 'POST' && url.includes('/challenges')) {
+                            apiCallMade = true;
+                        }
+                        return Promise.resolve({
+                            ok: true,
+                            status: 201,
+                            json: () => Promise.resolve({ 
+                                message: 'Challenge created successfully',
+                                challenge_id: TestUtils.randomNumber(1, 1000)
+                            })
+                        });
+                    };
+                    
+                    try {
+                        const apiService = new APIService();
+                        await apiService.createChallenge(challengeData);
+                        return apiCallMade === true;
+                    } finally {
+                        window.fetch = originalFetch;
+                    }
+                },
+                25 // Reduced iterations for browser testing
+            );
+        }
+        
+        async function testFreshDataLoading() {
+            return TestUtils.runPropertyTest(
+                'Fresh data loading',
+                async () => {
+                    let fetchCalled = false;
+                    
+                    // Mock fetch to track data loading calls
+                    const originalFetch = window.fetch;
+                    window.fetch = (url, options) => {
+                        if (url.includes('/challenges') && (!options || options.method === 'GET')) {
+                            fetchCalled = true;
+                        }
+                        return Promise.resolve({
+                            ok: true,
+                            status: 200,
+                            json: () => Promise.resolve([
+                                {
+                                    challenge_id: TestUtils.randomNumber(1, 100),
+                                    challenge: TestUtils.randomString(15),
+                                    skillpoints: TestUtils.randomNumber(1, 50)
+                                }
+                            ])
+                        });
+                    };
+                    
+                    try {
+                        const apiService = new APIService();
+                        await apiService.getChallenges();
+                        return fetchCalled === true;
+                    } finally {
+                        window.fetch = originalFetch;
+                    }
+                },
+                25 // Reduced iterations for browser testing
+            );
+        }
+        
+        async function runAllTests() {
+            clearOutput();
+            results.innerHTML = '';
+            await runAPITests();
+        }
+        
+        function clearOutput() {
+            output.textContent = '';
+            results.innerHTML = '';
+        }
+        
+        // Initialize
+        log('Property-based test runner initialized');
+        log('Click "Run API Service Tests" to test Properties 29 and 30');
+    </script>
+</body>
+</html>

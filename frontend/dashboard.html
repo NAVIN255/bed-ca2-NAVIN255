@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Magical Wellness Challenge</title>
+    <link rel="stylesheet" href="css/magical-theme.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="dashboard.html" class="logo">🔮 Magical Wellness</a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#challenges">🎯 Challenges</a></li>
+                        <li><a href="#gamification">🛒 Magical Shop</a></li>
+                        <li><a href="#profile">👤 Profile</a></li>
+                        <li><button id="logoutBtn" class="btn btn-secondary btn-sm">✨ Logout</button></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Welcome Section -->
+            <section class="welcome-section fade-in">
+                <div class="card magical-glow">
+                    <h1 id="welcome" class="card-title">🌟 Welcome to your Magical Wellness Journey! ✨</h1>
+                    <p class="card-subtitle">Embark on mystical challenges, earn magical points, and unlock enchanted rewards!</p>
+                </div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card fade-in">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-number" id="totalPoints">0</div>
+                        <div class="stat-label">Magical Points</div>
+                    </div>
+                    <div class="stat-card fade-in">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-number" id="completedChallenges">0</div>
+                        <div class="stat-label">Quests Completed</div>
+                    </div>
+                    <div class="stat-card fade-in">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-number" id="activeChallenges">0</div>
+                        <div class="stat-label">Active Quests</div>
+                    </div>
+                    <div class="stat-card fade-in">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-number" id="currentStreak">0</div>
+                        <div class="stat-label">Spell Streak</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick-actions">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🚀 Quick Magical Actions</h2>
+                    </div>
+                    <div class="grid grid-3">
+                        <button class="btn btn-primary" onclick="openCreateChallengeModal()">
+                            ➕ Create Quest
+                        </button>
+                        <button class="btn btn-success" onclick="showGamificationSection()">
+                            🛒 Magical Shop
+                        </button>
+                        <button class="btn btn-warning" onclick="showProgressSection()">
+                            📊 View Progress
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Challenges Section -->
+            <section id="challenges" class="challenges-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🎯 Available Magical Quests</h2>
+                        <div class="challenge-filters">
+                            <select id="difficultyFilter" class="form-input" onchange="filterChallenges()">
+                                <option value="">All Difficulties</option>
+                                <option value="easy">🌱 Apprentice</option>
+                                <option value="medium">⚡ Adept</option>
+                                <option value="hard">🔥 Master</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="challengeList" class="grid grid-2">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading magical quests...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gamification Section -->
+            <section id="gamification" class="gamification-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">🛒 Wellness Shop</h2>
+                        <p class="card-subtitle">Spend your points on spells, ingredients, and resources!</p>
+                    </div>
+                    
+                    <div class="shop-tabs">
+                        <button class="btn btn-secondary shop-tab active" onclick="showShopTab('spells')">🔮 Spells</button>
+                        <button class="btn btn-secondary shop-tab" onclick="showShopTab('ingredients')">🌿 Ingredients</button>
+                        <button class="btn btn-secondary shop-tab" onclick="showShopTab('resources')">💎 Resources</button>
+                    </div>
+
+                    <div id="shopContent" class="shop-content">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>Loading shop items...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section id="progress" class="progress-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">📊 Your Progress</h2>
+                    </div>
+                    <div class="progress-content">
+                        <div class="progress-item">
+                            <h3>Weekly Goal Progress</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%"></div>
+                            </div>
+                            <p>65% complete (13/20 challenges this week)</p>
+                        </div>
+                        
+                        <div class="progress-item">
+                            <h3>Monthly Achievement</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 40%"></div>
+                            </div>
+                            <p>40% complete (24/60 challenges this month)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Create Challenge Modal -->
+    <div id="createChallengeModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🌟 Create New Magical Quest</h3>
+                <button class="modal-close" onclick="closeCreateChallengeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createChallengeForm">
+                    <div class="form-group">
+                        <label for="challengeTitle" class="form-label">Quest Description ✨</label>
+                        <textarea id="challengeTitle" name="challenge" class="form-input" rows="3" placeholder="Describe your magical wellness quest..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="challengePoints" class="form-label">Magical Points Reward 🏆</label>
+                        <input type="number" id="challengePoints" name="skillpoints" class="form-input" min="1" max="100" placeholder="10" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateChallengeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createChallenge()">🌟 Create Quest</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenge Detail Modal -->
+    <div id="challengeDetailModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="challengeDetailTitle">Challenge Details</h3>
+                <button class="modal-close" onclick="closeChallengeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="challengeDetailBody">
+                <!-- Challenge details will be populated here -->
+            </div>
+            <div class="modal-footer" id="challengeDetailFooter">
+                <!-- Action buttons will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Utility Scripts - Load in correct order -->
+    <script src="js/utils/domUtils.js"></script>
+    <script src="js/utils/validation.js"></script>
+    <script src="js/utils/formatUtils.js"></script>
+    <script src="js/utils/errorHandler.js"></script>
+    <script src="js/services/APIService.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard-fixed.js"></script>
+
+    <style>
+        .challenge-filters {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .challenge-filters select {
+            max-width: 200px;
+        }
+
+        .shop-tabs {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .shop-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .shop-content {
+            min-height: 300px;
+        }
+
+        .progress-item {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .progress-item h3 {
+            margin-bottom: var(--spacing-sm);
+            color: var(--gray-700);
+        }
+
+        .progress-item p {
+            margin-top: var(--spacing-sm);
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .welcome-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stats-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .quick-actions {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .challenges-section {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+
+            .nav-links {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .challenge-filters {
+                margin-top: var(--spacing-md);
+            }
+
+            .shop-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

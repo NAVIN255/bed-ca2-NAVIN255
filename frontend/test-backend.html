@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Test | Magical Wellness Challenge</title>
+    <link rel="stylesheet" href="css/magical-theme.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card magical-glow" style="margin: 2rem auto; max-width: 600px;">
+            <h1 class="card-title">🔧 Backend Connection Test</h1>
+            <p class="card-subtitle">Test if the backend server is running and responding</p>
+            
+            <div style="margin: 2rem 0;">
+                <button class="btn btn-primary" onclick="testBackendConnection()">
+                    🔍 Test Backend Connection
+                </button>
+                <button class="btn btn-success" onclick="testLogin()">
+                    🔐 Test Login API
+                </button>
+                <button class="btn btn-warning" onclick="testChallengesAPI()">
+                    🎯 Test Challenges API
+                </button>
+            </div>
+
+            <div id="test-results" class="card">
+                <h3>Test Results:</h3>
+                <div id="results-content">
+                    <p>Click buttons above to test backend...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/errorHandler.js"></script>
+    <script src="js/services/APIService.js"></script>
+
+    <script>
+        const apiService = new APIService();
+
+        async function testBackendConnection() {
+            logResult('🔍 Testing backend connection...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test', password: 'test' })
+                });
+                
+                if (response.status === 400 || response.status === 401) {
+                    logResult('✅ Backend is running and responding!');
+                    logResult(`   Status: ${response.status} (Expected for invalid credentials)`);
+                } else {
+                    logResult(`✅ Backend responded with status: ${response.status}`);
+                }
+            } catch (error) {
+                logResult('❌ Backend connection failed!');
+                logResult(`   Error: ${error.message}`);
+                logResult('   Make sure to run: npm run dev in the backend folder');
+            }
+        }
+
+        async function testLogin() {
+            logResult('🔐 Testing login with test account...');
+            
+            try {
+                const response = await apiService.login({
+                    email: 'test@lol.com',
+                    password: '1234'
+                });
+                
+                logResult('✅ Login successful!');
+                logResult(`   Token received: ${response.accessToken ? 'Yes' : 'No'}`);
+            } catch (error) {
+                logResult('❌ Login failed!');
+                logResult(`   Error: ${error.message}`);
+                logResult('   This might be expected if the test account doesn\'t exist');
+            }
+        }
+
+        async function testChallengesAPI() {
+            logResult('🎯 Testing challenges API...');
+            
+            // First try to login to get a token
+            try {
+                await apiService.login({
+                    email: 'test@lol.com',
+                    password: '1234'
+                });
+                
+                const challenges = await apiService.getChallenges();
+                logResult('✅ Challenges API works!');
+                logResult(`   Found ${challenges.length} challenges`);
+            } catch (error) {
+                logResult('❌ Challenges API failed!');
+                logResult(`   Error: ${error.message}`);
+                
+                if (error.message.includes('401')) {
+                    logResult('   This is likely due to authentication - try creating a test account first');
+                }
+            }
+        }
+
+        function logResult(message) {
+            const resultsContent = document.getElementById('results-content');
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.margin = '0.25rem 0';
+            p.style.fontFamily = 'monospace';
+            p.style.fontSize = '0.9rem';
+            
+            if (message.includes('✅')) {
+                p.style.color = '#22c55e';
+            } else if (message.includes('❌')) {
+                p.style.color = '#ef4444';
+            } else if (message.includes('🔍') || message.includes('🔐') || message.includes('🎯')) {
+                p.style.color = '#3b82f6';
+                p.style.fontWeight = 'bold';
+            }
+            
+            resultsContent.appendChild(p);
+            resultsContent.scrollTop = resultsContent.scrollHeight;
+        }
+
+        // Auto-test connection on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testBackendConnection, 1000);
+        });
+    </script>
+</body>
+</html>

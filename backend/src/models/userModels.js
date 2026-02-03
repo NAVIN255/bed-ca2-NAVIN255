@@ -7,9 +7,9 @@ module.exports.login = (data, callback) => {
     const SQLSTATEMENT = `
         SELECT user_id, username, password, skillpoints
         FROM User
-        WHERE username = ? ;
+        WHERE email = ? ;
     `;
-    const VALUES = [data.username];
+    const VALUES = [data.email];
 
     db.query(SQLSTATEMENT, VALUES, (error, results) => {
         if (error) {

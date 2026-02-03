@@ -4,14 +4,14 @@ const model = require("../models/userModels");
 // Controller: User Login
 ///////////////////////////////////////////////////////
 module.exports.login = (req, res, next) => {
-    if (!req.body.username || !req.body.password) {
+    if (!req.body.email || !req.body.password) {
         return res.status(400).json({
-            message: "Username or password is missing"
+            message: "Email or password is missing"
         });
     }
 
     const data = {
-        username: req.body.username
+        email: req.body.email
     };
 
     const callback = (error, results) => {

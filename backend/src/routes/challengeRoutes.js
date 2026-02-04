@@ -10,29 +10,44 @@ const jwtMiddleware = require("../middleware/authMiddleware");
 router.use(jwtMiddleware.verifyToken);
 
 // ----------------
+// Active challenges
+// ----------------
+router.get(
+  '/',
+  challengeController.readActiveChallengesForUser
+);
+
+// ----------------
+// Completed challenge count
+// ----------------
+router.get(
+  '/completed/count',
+  challengeController.getCompletedCount
+);
+
+// ----------------
 // Challenges CRUD
 // ----------------
-router.get("/", challengeController.readAllChallenges);
 router.get("/:challenge_id", challengeController.readChallengeById);
 router.post("/", challengeController.createNewChallenge);
 router.put("/:challenge_id", challengeController.updateChallengeById);
 router.delete("/:challenge_id", challengeController.deleteChallengeById);
 
 // ----------------------------
-// Challenge Completions (CA1)
+// Challenge Completions
 // ----------------------------
 router.post(
-    "/:challenge_id/completions",
-    challengeController.checkUserAndChallenge,
-    challengeController.createNewCompletion,
-    challengeController.readChallengeSkillpoints,
-    challengeController.updateUserSkillpoints,
-    challengeController.readCompletionById
+  "/:challenge_id/completions",
+  challengeController.checkUserAndChallenge,
+  challengeController.createNewCompletion,
+  challengeController.readChallengeSkillpoints,
+  challengeController.updateUserSkillpoints,
+  challengeController.readCompletionById
 );
 
 router.get(
-    "/:challenge_id/completions",
-    challengeController.readCompletionByChallengeId
+  "/:challenge_id/completions",
+  challengeController.readCompletionByChallengeId
 );
 
 module.exports = router;

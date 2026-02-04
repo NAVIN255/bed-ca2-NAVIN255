@@ -26,30 +26,41 @@ const userResourceRoutes = require('./userResourceRoutes');
 // AUTH ROUTES (NO TOKEN)
 // ===========================
 router.post(
-    "/login",
-    userController.login,
-    bcryptMiddleware.comparePassword,
-    jwtMiddleware.generateToken,
-    jwtMiddleware.generateRefreshToken,
-    jwtMiddleware.sendToken
+  "/login",
+  userController.login,
+  bcryptMiddleware.comparePassword,
+  jwtMiddleware.generateToken,
+  jwtMiddleware.generateRefreshToken,
+  jwtMiddleware.sendToken
 );
 
 router.post(
-    "/register",
-    userController.checkUsernameOrEmailExist,
-    bcryptMiddleware.hashPassword,
-    userController.register,
-    jwtMiddleware.generateToken,
-    jwtMiddleware.generateRefreshToken,
-    jwtMiddleware.sendToken
+  "/register",
+  userController.checkUsernameOrEmailExist,
+  bcryptMiddleware.hashPassword,
+  userController.register,
+  bcryptMiddleware.hashPassword,
+  jwtMiddleware.generateToken,
+  jwtMiddleware.generateRefreshToken,
+  jwtMiddleware.sendToken
 );
 
 router.post(
-    "/refresh",
-    jwtMiddleware.refreshToken,
-    jwtMiddleware.generateToken,
-    jwtMiddleware.generateRefreshToken,
-    jwtMiddleware.sendToken
+  "/refresh",
+  jwtMiddleware.refreshToken,
+  jwtMiddleware.generateToken,
+  jwtMiddleware.generateRefreshToken,
+  jwtMiddleware.sendToken
+);
+
+// ===========================
+// USER PROFILE (PROTECTED)
+// ===========================
+// 🔐 Get logged-in user's profile (NO userId in URL)
+router.get(
+  "/users/me",
+  jwtMiddleware.verifyToken,
+  userController.getMyProfile
 );
 
 // ===========================

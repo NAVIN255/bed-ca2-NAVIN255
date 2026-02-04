@@ -4,19 +4,20 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const jwtMiddleware = require('../middleware/authMiddleware');
 
-// Example: protect all user routes
+// 🔐 Protect everything
 router.use(jwtMiddleware.verifyToken);
 
-// Get all users
+// ===============================
+// CURRENT USER
+// ===============================
+router.get('/profile', userController.getProfile);
+
+// ===============================
+// ADMIN / GENERIC
+// ===============================
 router.get('/', userController.readAllUsers);
-
-// Get user by ID
 router.get('/:user_id', userController.readUserById);
-
-// Update user
 router.put('/:user_id', userController.updateUserById);
-
-// Delete user
 router.delete('/:user_id', userController.deleteUserById);
 
 module.exports = router;

@@ -85,46 +85,50 @@ module.exports.readUserChallenges = (req, res, next) =>
 ///////////////////////////////////////////////////////
 // Controller to create a new fitness challenge
 ///////////////////////////////////////////////////////
-module.exports.createNewChallenge = (req, res, next) =>
-{
-    if(req.body.challenge === undefined || req.body.skillpoints === undefined){
-        res.status(400).json({
-            message: "Challenge description or skillpoints missing"
+module.exports.createNewChallenge = (req, res) => {
+    console.log("Incoming create challenge request");
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+
+    // 🔴 Hard guard: body must exist
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({
+            message: "Request body missing"
         });
-        return;
     }
 
-    if(!res.locals.userId) {
-        res.status(401).json({
+    const { challenge, skillpoints } = req.body;
+
+    if (!challenge || !skillpoints) {
+        return res.status(400).json({
+            message: "Challenge description or skillpoints missing"
+        });
+    }
+
+    if (!res.locals.userId) {
+        return res.status(401).json({
             message: "User ID not found in token"
         });
-        return;
     }
 
     const data = {
-        challenge: req.body.challenge,
-        creator_id: res.locals.userId,
-        skillpoints: req.body.skillpoints
+        challenge,
+        skillpoints,
+        creator_id: res.locals.userId
     };
 
-    const callback = (error, results, fields) =>
-    {
-        if(error){
+    model.insertSingle(data, (error, results) => {
+        if (error) {
             console.error("Error creating challenge:", error);
-            res.status(500).json(error);
+            return res.status(500).json(error);
         }
-        else{
-            res.locals.inserted_id = results.insertId;
-            res.status(201).json({
-                message: "Fitness challenge created successfully",
-                challenge_id: results.insertId
-            });
-        }
-    };
 
-    model.insertSingle(data, callback);
+        res.status(201).json({
+            message: "Fitness challenge created successfully",
+            challenge_id: results.insertId
+        });
+    });
 };
-
 ///////////////////////////////////////////////////////
 // Controller to check creator ID of a challenge
 ///////////////////////////////////////////////////////
@@ -256,8 +260,16 @@ module.exports.createNewCompletion = (req, res, next) =>
     const callback = (error, results, fields) =>
     {
         if(error){
-            console.error("Error createNewCompletion:", error);
-            res.status(500).json(error);
+           if (error.code === "ER_DUP_ENTRY") {
+        return res.status(409).json({
+            message: "You have already completed this challenge"
+        });
+    }
+
+    console.error("Error createNewCompletion:", error);
+    return res.status(500).json({
+        message: "Failed to complete challenge"
+    });
         }
         else{
             res.locals.completeId = results.insertId;
@@ -383,4 +395,44 @@ module.exports.readCompletionByChallengeId = (req, res, next) =>
     };
 
     model.selectCompletionByChallengeId(data, callback);
+};
+
+module.exports.readActiveChallengesForUser = (req, res) => {
+  const data = {
+    user_id: res.locals.userId
+  };
+
+  const callback = (err, results) => {
+    if (err) {
+      console.error("Error readActiveChallengesForUser:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    res.status(200).json(results);
+  };
+
+  model.selectActiveChallengesForUser(data, callback);
+};
+
+///////////////////////////////////////////////////////
+// Get completed challenge count for current user
+///////////////////////////////////////////////////////
+module.exports.getCompletedCount = (req, res) => {
+  const data = {
+    user_id: res.locals.userId
+  };
+
+  const callback = (error, results) => {
+    if (error) {
+      console.error("Error getCompletedCount:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    res.status(200).json({
+      completedChallenges: results[0].completedCount
+    });
+  };
+
+  require("../models/challengeModel")
+    .countCompletedChallengesForUser(data, callback);
 };

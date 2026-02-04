@@ -206,3 +206,45 @@ module.exports.deleteUserById = (req, res, next) => {
 
     model.deleteUserById(data, callback);
 };
+
+module.exports.getMyProfile = (req, res) => {
+  const userId = res.locals.userId;
+
+  const callback = (error, results) => {
+    if (error) {
+      console.error("Error getMyProfile:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(results[0]);
+  };
+
+  require("../models/userModel").selectById({ user_id: userId }, callback);
+};
+
+
+///////////////////////////////////////////////////////
+// Controller: Get current user profile
+///////////////////////////////////////////////////////
+module.exports.getProfile = (req, res) => {
+  const data = {
+    user_id: res.locals.userId
+  };
+
+  model.readUserById(data, (error, results) => {
+    if (error) {
+      console.error("getProfile error:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(results[0]);
+  });
+};

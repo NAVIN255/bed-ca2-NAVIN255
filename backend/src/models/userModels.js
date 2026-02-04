@@ -1,132 +1,74 @@
 const db = require("../services/db");
 
-///////////////////////////////////////////////////////
-// Model: User login (check username + password hash)
-///////////////////////////////////////////////////////
+/* ===============================
+   AUTH
+=============================== */
 module.exports.login = (data, callback) => {
-    const SQLSTATEMENT = `
-        SELECT user_id, username, password, skillpoints
-        FROM User
-        WHERE email = ? ;
-    `;
-    const VALUES = [data.email];
-
-    db.query(SQLSTATEMENT, VALUES, (error, results) => {
-        if (error) {
-            console.error("Model Error login:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+  const SQL = `
+    SELECT user_id, username, password, skillpoints
+    FROM User
+    WHERE email = ?;
+  `;
+  db.query(SQL, [data.email], callback);
 };
 
-///////////////////////////////////////////////////////
-// Model: Register new user
-///////////////////////////////////////////////////////
 module.exports.register = (data, callback) => {
-    const SQLSTATEMENT = `
-        INSERT INTO User (email, username, password, skillpoints)
-        VALUES (?, ?, ?, ?);
-    `;
-    const VALUES = [data.email, data.username, data.password, data.skillpoints];
-
-    db.query(SQLSTATEMENT, VALUES, (error, results) => {
-        if (error) {
-            console.error("Model Error register:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+  const SQL = `
+    INSERT INTO User (email, username, password, skillpoints)
+    VALUES (?, ?, ?, ?);
+  `;
+  db.query(SQL, [
+    data.email,
+    data.username,
+    data.password,
+    data.skillpoints
+  ], callback);
 };
 
-///////////////////////////////////////////////////////
-// Model: Check if username or email exists
-///////////////////////////////////////////////////////
 module.exports.checkUsernameOrEmailExist = (data, callback) => {
-    const SQLSTATEMENT = `
-        SELECT user_id
-        FROM User
-        WHERE username = ? OR email = ?;
-    `;
-    const VALUES = [data.username, data.email];
-
-    db.query(SQLSTATEMENT, VALUES, (error, results) => {
-        if (error) {
-            console.error("Model Error checkUsernameOrEmailExist:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+  const SQL = `
+    SELECT user_id FROM User
+    WHERE username = ? OR email = ?;
+  `;
+  db.query(SQL, [data.username, data.email], callback);
 };
 
-///////////////////////////////////////////////////////
-// Model: Select all users
-///////////////////////////////////////////////////////
+/* ===============================
+   USERS
+=============================== */
 module.exports.selectAll = (callback) => {
-    const SQLSTATEMENT = `
-        SELECT user_id, username, email, skillpoints
-        FROM User;
-    `;
-
-    db.query(SQLSTATEMENT, (error, results) => {
-        if (error) {
-            console.error("Model Error selectAll:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+  db.query(
+    "SELECT user_id, username, email, skillpoints FROM User;",
+    callback
+  );
 };
 
-///////////////////////////////////////////////////////
-// Model: Select user by ID
-///////////////////////////////////////////////////////
-module.exports.selectById = (data, callback) => {
-    const SQLSTATEMENT = `
-        SELECT user_id, username, email, skillpoints
-        FROM User
-        WHERE user_id = ?;
-    `;
-    const VALUES = [data.id];
-
-    db.query(SQLSTATEMENT, VALUES, (error, results) => {
-        if (error) {
-            console.error("Model Error selectById:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+module.exports.readUserById = (data, callback) => {
+  const SQL = `
+    SELECT user_id, username, email, skillpoints
+    FROM User
+    WHERE user_id = ?;
+  `;
+  db.query(SQL, [data.user_id], callback);
 };
 
-///////////////////////////////////////////////////////
-// Model: Update user by ID
-///////////////////////////////////////////////////////
 module.exports.updateUserById = (data, callback) => {
-    const SQLSTATEMENT = `
-        UPDATE User
-        SET username = ?, skillpoints = ?
-        WHERE user_id = ?;
-    `;
-    const VALUES = [data.username, data.skillpoints, data.user_id];
-
-    db.query(SQLSTATEMENT, VALUES, (error, results) => {
-        if (error) {
-            console.error("Model Error updateUserById:", error);
-            callback(error, null);
-            return;
-        }
-        callback(null, results);
-    });
+  const SQL = `
+    UPDATE User
+    SET username = ?, skillpoints = ?
+    WHERE user_id = ?;
+  `;
+  db.query(SQL, [
+    data.username,
+    data.skillpoints,
+    data.user_id
+  ], callback);
 };
 
 module.exports.deleteUserById = (data, callback) => {
-    const SQLSTATEMENT = `
-        DELETE FROM User
-        WHERE user_id = ?;
-    `;
-    db.query(SQLSTATEMENT, [data.user_id], callback);
+  db.query(
+    "DELETE FROM User WHERE user_id = ?;",
+    [data.user_id],
+    callback
+  );
 };

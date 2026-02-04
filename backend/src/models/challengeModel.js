@@ -237,3 +237,33 @@ module.exports.selectCompletionByChallengeId = (data, callback) =>
 
     pool.query(SQLSTATEMENT, VALUES, callback);
 };
+
+///////////////////////////////////////////////////////
+// Select ACTIVE challenges for a user (not completed)
+///////////////////////////////////////////////////////
+module.exports.selectActiveChallengesForUser = (data, callback) => {
+  const SQLSTATEMENT = `
+    SELECT fc.*
+    FROM FitnessChallenge fc
+    LEFT JOIN UserCompletion uc
+      ON fc.challenge_id = uc.challenge_id
+      AND uc.user_id = ?
+    WHERE uc.challenge_id IS NULL
+    ORDER BY fc.challenge_id DESC;
+  `;
+
+  pool.query(SQLSTATEMENT, [data.user_id], callback);
+};
+
+///////////////////////////////////////////////////////
+// Count completed challenges for a user
+///////////////////////////////////////////////////////
+module.exports.countCompletedChallengesForUser = (data, callback) => {
+  const SQL = `
+    SELECT COUNT(*) AS completedCount
+    FROM UserCompletion
+    WHERE user_id = ?;
+  `;
+
+  pool.query(SQL, [data.user_id], callback);
+};

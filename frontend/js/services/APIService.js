@@ -47,24 +47,6 @@ class APIService {
     }
   }
 
-  async refreshAccessToken() {
-    try {
-      const response = await this.makeRequest('/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken: this.refreshToken })
-      });
-      
-      if (response.accessToken && response.refreshToken) {
-        this.setTokens(response.accessToken, response.refreshToken);
-      }
-      
-      return response;
-    } catch (error) {
-      this.clearTokens();
-      throw this.handleError(error);
-    }
-  }
-
   // ===============================
   // CHALLENGE METHODS
   // ===============================
@@ -73,12 +55,12 @@ class APIService {
     return this.makeAuthenticatedRequest('/challenges', { method: 'GET' });
   }
 
-  async createChallenge(challengeData) {
-    return this.makeAuthenticatedRequest('/challenges', {
-      method: 'POST',
-      body: JSON.stringify(challengeData)
-    });
-  }
+async createChallenge(challengeData) {
+  return this.makeAuthenticatedRequest("/challenges", {
+    method: "POST",
+    body: JSON.stringify(challengeData)
+  });
+}
 
   async updateChallenge(id, challengeData) {
     return this.makeAuthenticatedRequest(`/challenges/${id}`, {
@@ -87,18 +69,23 @@ class APIService {
     });
   }
 
+  
+
   async deleteChallenge(id) {
     return this.makeAuthenticatedRequest(`/challenges/${id}`, {
       method: 'DELETE'
     });
   }
 
-  async completeChallenge(id, completionData) {
-    return this.makeAuthenticatedRequest(`/challenges/${id}/completions`, {
-      method: 'POST',
+async completeChallenge(challengeId, completionData) {
+  return this.makeAuthenticatedRequest(
+    `/challenges/${challengeId}/completions`,
+    {
+      method: "POST",
       body: JSON.stringify(completionData)
-    });
-  }
+    }
+  );
+}
 
   async getChallengeCompletions(id) {
     return this.makeAuthenticatedRequest(`/challenges/${id}/completions`, {
@@ -106,6 +93,7 @@ class APIService {
     });
   }
 
+  
   // ===============================
   // GAMIFICATION METHODS
   // ===============================
@@ -169,56 +157,60 @@ class APIService {
     });
   }
 
+  async getMyProfile() {
+  return this.makeAuthenticatedRequest("/users/me", {
+    method: "GET"
+  });
+}
+
+async getUserProfile() {
+  return this.makeAuthenticatedRequest("/users/profile", {
+    method: "GET"
+  });
+}
+
   // ===============================
   // UTILITY METHODS
   // ===============================
   
-  async makeRequest(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    };
+async makeRequest(endpoint, options = {}) {
+  const url = `${this.baseURL}${endpoint}`;
 
-    const requestOptions = { ...defaultOptions, ...options };
+  const requestOptions = {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  };
 
-    const response = await fetch(url, requestOptions);
-    return this.handleResponse(response);
+  // ✅ Only attach body if it exists
+  if (options.body) {
+    requestOptions.body = options.body;
   }
+
+  const response = await fetch(url, requestOptions);
+  return this.handleResponse(response);
+}
 
   async makeAuthenticatedRequest(endpoint, options = {}) {
-    // Add authorization header
-    const authOptions = {
-      ...options,
-      headers: {
-        ...options.headers,
-        'Authorization': `Bearer ${this.token}`
-      }
-    };
-
-    try {
-      return await this.makeRequest(endpoint, authOptions);
-    } catch (error) {
-      // If token expired, try to refresh and retry
-      if (error.status === 401 && this.refreshToken) {
-        try {
-          await this.refreshAccessToken();
-          // Retry with new token
-          authOptions.headers.Authorization = `Bearer ${this.token}`;
-          return await this.makeRequest(endpoint, authOptions);
-        } catch (refreshError) {
-          // Refresh failed, redirect to login
-          this.clearTokens();
-          window.location.href = 'index.html';
-          throw refreshError;
-        }
-      }
-      throw error;
-    }
+  // If no token, force login
+  if (!this.token) {
+    alert("Please log in again");
+    window.location.href = "index.html";
+    throw new Error("Not authenticated");
   }
+
+  const authOptions = {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${this.token}`
+    }
+  };
+
+  return this.makeRequest(endpoint, authOptions);
+}
 
   async handleResponse(response) {
     const data = await response.json().catch(() => ({}));

@@ -18,7 +18,11 @@
     <nav>
       <ul class="nav-links">
         <li><a href="dashboard.html">Dashboard</a></li>
-        <li><button id="logoutBtn" class="btn btn-secondary btn-sm">Logout</button></li>
+        <li>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">
+            Logout
+          </button>
+        </li>
       </ul>
     </nav>
   </div>
@@ -40,13 +44,23 @@
     <!-- ===== ACTIVE SPELL ===== -->
     <section class="card">
       <h2>🔮 Active Spell</h2>
-      <p id="activeSpellDisplay">No active spell</p>
+
+      <div id="activeSpellBox">
+        <p id="activeSpellName">No active spell</p>
+        <p id="activeSpellUses" class="badge badge-info hidden">
+          🔥 0 / 3 uses left
+        </p>
+      </div>
     </section>
 
     <!-- ===== OWNED SPELLS ===== -->
     <section class="card">
       <h2>🪄 Owned Spells</h2>
-      <div id="ownedSpells" class="grid grid-3">
+      <p class="card-subtitle">
+        Activate a spell to gain bonus effects (3 uses per activation)
+      </p>
+
+      <div id="ownedSpells" class="grid grid-3 mt-2">
         <p>Loading spells...</p>
       </div>
     </section>
@@ -54,7 +68,11 @@
     <!-- ===== PROGRESS ===== -->
     <section class="card">
       <h2>🏆 Progress</h2>
-      <p><strong>Completed Challenges:</strong> <span id="completedCount">0</span></p>
+      <p>
+        <strong>Completed Challenges:</strong>
+        <span id="completedCount">0</span>
+      </p>
+
       <div id="badgeList" class="mt-2"></div>
     </section>
 

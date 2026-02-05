@@ -176,3 +176,63 @@ module.exports = {
   readCompletionById,
   readCompletionByChallengeId
 };
+
+module.exports.createNewChallenge = (req, res) => {
+  const { challenge, difficulty } = req.body;
+  const userId = res.locals.userId;
+
+  if (!challenge || !difficulty) {
+    return res.status(400).json({ message: "Missing data" });
+  }
+
+  if (challenge.length < 20) {
+    return res.status(400).json({
+      message: "Challenge description too short"
+    });
+  }
+
+  const POINTS_MAP = {
+    easy: 20,
+    medium: 50,
+    hard: 100
+  };
+
+  const skillpoints = POINTS_MAP[difficulty];
+
+  if (!skillpoints) {
+    return res.status(400).json({ message: "Invalid difficulty" });
+  }
+
+  // 🔒 Limit 3 challenges per day
+  const limitSql = `
+    SELECT COUNT(*) AS count
+    FROM FitnessChallenge
+    WHERE creator_id = ?
+      AND DATE(created_at) = CURDATE();
+  `;
+
+  require("../services/db").query(limitSql, [userId], (err, rows) => {
+    if (err) return res.status(500).json(err);
+
+    if (rows[0].count >= 3) {
+      return res.status(403).json({
+        message: "Daily challenge limit reached"
+      });
+    }
+
+    const data = {
+      challenge,
+      skillpoints,
+      creator_id: userId
+    };
+
+    model.insertSingle(data, (err, result) => {
+      if (err) return res.status(500).json(err);
+
+      res.status(201).json({
+        message: "Challenge created",
+        challenge_id: result.insertId
+      });
+    });
+  });
+};

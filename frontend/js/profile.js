@@ -25,30 +25,16 @@ async function loadProfile() {
     const spells = await apiService.makeAuthenticatedRequest("/spells/user");
 
     // --- Basic Info ---
-    document.getElementById("profileUsername").textContent =
-      profile.username;
-
-    document.getElementById("profileEmail").textContent =
-      profile.email;
-
-    document.getElementById("profileLevel").textContent =
-      profile.level;
-
-    document.getElementById("profilePoints").textContent =
-      profile.skillpoints;
+    document.getElementById("profileUsername").textContent = profile.username;
+    document.getElementById("profileEmail").textContent = profile.email;
+    document.getElementById("profileLevel").textContent = profile.level;
+    document.getElementById("profilePoints").textContent = profile.skillpoints;
 
     // --- Active Spell ---
-    const activeSpellEl = document.getElementById("activeSpellDisplay");
-
-    if (profile.active_spell_name) {
-      activeSpellEl.textContent =
-        `🔥 ${profile.active_spell_name} (${profile.active_spell_uses} / 3 uses left)`;
-    } else {
-      activeSpellEl.textContent = "No active spell";
-    }
+    renderActiveSpell(profile);
 
     // --- Owned Spells ---
-    renderOwnedSpells(spells);
+    renderOwnedSpells(spells, profile.active_spell_id);
 
     // --- Badges ---
     renderBadges(profile.badges);
@@ -68,9 +54,26 @@ async function loadProfile() {
 }
 
 // ===============================
-// RENDER OWNED SPELLS
+// ACTIVE SPELL DISPLAY
 // ===============================
-function renderOwnedSpells(spells) {
+function renderActiveSpell(profile) {
+  const nameEl = document.getElementById("activeSpellName");
+  const usesEl = document.getElementById("activeSpellUses");
+
+  if (profile.active_spell_name) {
+    nameEl.textContent = `🔮 ${profile.active_spell_name}`;
+    usesEl.textContent = `🔥 ${profile.active_spell_uses} / 3 uses left`;
+    usesEl.classList.remove("hidden");
+  } else {
+    nameEl.textContent = "No active spell";
+    usesEl.classList.add("hidden");
+  }
+}
+
+// ===============================
+// OWNED SPELLS
+// ===============================
+function renderOwnedSpells(spells, activeSpellId) {
   const container = document.getElementById("ownedSpells");
 
   if (!spells.length) {
@@ -78,12 +81,44 @@ function renderOwnedSpells(spells) {
     return;
   }
 
-  container.innerHTML = spells.map(spell => `
-    <div class="card">
-      <h4>🔮 ${spell.name}</h4>
-      <span class="badge badge-success">Owned</span>
-    </div>
-  `).join("");
+  container.innerHTML = spells.map(spell => {
+    const isActive = spell.spell_id === activeSpellId;
+
+    return `
+      <div class="card ${isActive ? "magical-glow" : ""}">
+        <h4>🔮 ${spell.name}</h4>
+
+        <div class="mt-2">
+          ${
+            isActive
+              ? `<span class="badge badge-success">Active</span>`
+              : `<button class="btn btn-primary btn-sm"
+                   onclick="activateSpell(${spell.spell_id})">
+                   Activate
+                 </button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ===============================
+// ACTIVATE SPELL
+// ===============================
+async function activateSpell(spellId) {
+  try {
+    await apiService.makeAuthenticatedRequest("/spells/activate", {
+      method: "POST",
+      body: JSON.stringify({ spell_id: spellId })
+    });
+
+    alert("🔮 Spell activated!");
+    loadProfile(); // refresh UI
+
+  } catch (err) {
+    alert(err.message || "Failed to activate spell");
+  }
 }
 
 // ===============================

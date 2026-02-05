@@ -93,19 +93,20 @@ function updateActiveSpellDisplay() {
   const spellEl = document.getElementById("activeSpell");
   const usesEl = document.getElementById("activeSpellUses");
 
-  if (!spellEl || !usesEl) return;
+  if (!spellEl) return;
 
-  // ❌ No active spell
   if (!userStats.activeSpellId) {
     spellEl.textContent = "None";
-    usesEl.classList.add("hidden");
+    if (usesEl) usesEl.classList.add("hidden");
     return;
   }
 
-  // ✅ Active spell
   spellEl.textContent = `🔥 ${userStats.activeSpellName}`;
-  usesEl.textContent = `🔥 ${userStats.activeSpellUses} / 3`;
-  usesEl.classList.remove("hidden");
+
+  if (usesEl) {
+    usesEl.textContent = `🔥 ${userStats.activeSpellUses} / 3 uses`;
+    usesEl.classList.remove("hidden");
+  }
 }
 
 // ===============================
@@ -199,13 +200,12 @@ async function completeChallenge(id) {
       notes: "Completed"
     });
 
-    await loadUserProfile(); // 🔥 updates spell uses
+    await loadUserProfile();
     await loadChallenges();
     await loadCompletedCount();
 
     alert("🎉 Challenge completed!");
-
-  } catch (err) {
+  } catch {
     alert("Failed to complete challenge");
   }
 }
@@ -282,25 +282,52 @@ function hideAllSections() {
     .forEach(s => s.classList.add("hidden"));
 }
 
-window.showChallenges = () => {
+function showChallenges() {
   hideAllSections();
-  document.getElementById("challenges")
-    ?.classList.remove("hidden");
-};
+  document.getElementById("challenges")?.classList.remove("hidden");
+}
 
-window.showGamificationSection = () => {
+function showGamificationSection() {
   hideAllSections();
-  document.getElementById("gamification")
-    ?.classList.remove("hidden");
+  document.getElementById("gamification")?.classList.remove("hidden");
   loadSpells();
-};
+}
 
-window.showProgressSection = () => {
+function showProgressSection() {
   hideAllSections();
-  document.getElementById("progress")
-    ?.classList.remove("hidden");
-};
+  document.getElementById("progress")?.classList.remove("hidden");
+}
 
+// ===============================
+// CREATE CHALLENGE MODAL (🔥 FIXED)
+// ===============================
+function openCreateChallengeModal() {
+  document.getElementById("createChallengeModal")
+    ?.classList.add("show");
+}
+
+function closeCreateChallengeModal() {
+  document.getElementById("createChallengeModal")
+    ?.classList.remove("show");
+}
+
+async function createChallenge() {
+  const form = document.getElementById("createChallengeForm");
+  const data = Object.fromEntries(new FormData(form));
+
+  if (data.challenge.length < 20) {
+    alert("Challenge description must be at least 20 characters.");
+    return;
+  }
+
+  await apiService.createChallenge({
+    challenge: data.challenge,
+    difficulty: data.difficulty
+  });
+
+  closeCreateChallengeModal();
+  await loadChallenges();
+}
 // ===============================
 // LOGOUT
 // ===============================

@@ -154,8 +154,12 @@
         <label>Challenge Description</label>
         <textarea name="challenge" required></textarea>
 
-        <label>Skillpoints</label>
-        <input type="number" name="skillpoints" min="1" max="100" required />
+        <label>Difficulty</label>
+<select name="difficulty" required>
+  <option value="easy">Easy (20 pts)</option>
+  <option value="medium">Medium (50 pts)</option>
+  <option value="hard">Hard (100 pts)</option>
+</select>
       </form>
     </div>
 

@@ -12,15 +12,9 @@ const jwtMiddleware = require("../middleware/authMiddleware");
 // Feature route imports
 // ---------------------------
 const userRoutes = require("./userRoutes");
-const classRoutes = require("./classRoutes");
 const challengeRoutes = require("./challengeRoutes");
-const studentRoutes = require("./studentRoutes");
-const spellRoutes = require("./spellRoutes");
-const ingredientRoutes = require("./ingredientRoutes");
-const resourceRoutes = require("./resourceRoutes");
-const reviewRoutes = require("./reviewRoutes");
 const completionRoutes = require("./completionRoutes");
-const userResourceRoutes = require("./userResourceRoutes");
+const spellRoutes = require("./spellRoutes");
 
 // ===========================
 // AUTH ROUTES (PUBLIC)
@@ -56,23 +50,17 @@ router.post(
 // PROTECTED ROUTES
 // ===========================
 
-// 👉 User profile (single source of truth)
+// 👉 User profile
 router.get(
   "/users/profile",
   jwtMiddleware.verifyToken,
   userController.getProfile
 );
 
-// 👉 Feature modules
+// 👉 Core features
 router.use("/users", jwtMiddleware.verifyToken, userRoutes);
-router.use("/classes", jwtMiddleware.verifyToken, classRoutes);
 router.use("/challenges", jwtMiddleware.verifyToken, challengeRoutes);
-router.use("/students", jwtMiddleware.verifyToken, studentRoutes);
-router.use("/spells", jwtMiddleware.verifyToken, spellRoutes);
-router.use("/ingredients", jwtMiddleware.verifyToken, ingredientRoutes);
-router.use("/resources", jwtMiddleware.verifyToken, resourceRoutes);
-router.use("/reviews", jwtMiddleware.verifyToken, reviewRoutes);
 router.use("/completions", jwtMiddleware.verifyToken, completionRoutes);
-router.use("/user-resources", jwtMiddleware.verifyToken, userResourceRoutes);
+router.use("/spells", jwtMiddleware.verifyToken, spellRoutes);
 
 module.exports = router;

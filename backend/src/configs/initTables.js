@@ -10,24 +10,16 @@ bcrypt.hash('1234', 10, (err, hash) => {
   const SQLSTATEMENT = `
   SET FOREIGN_KEY_CHECKS = 0;
 
-  DROP TABLE IF EXISTS Reviews;
-  DROP TABLE IF EXISTS UserSpells;
-  DROP TABLE IF EXISTS UserResources;
-  DROP TABLE IF EXISTS StudentIngredients;
-  DROP TABLE IF EXISTS Ingredients;
-  DROP TABLE IF EXISTS ClassEnrollment;
-  DROP TABLE IF EXISTS Classes;
-  DROP TABLE IF EXISTS StudentSpells;
-  DROP TABLE IF EXISTS SpellShop;
-  DROP TABLE IF EXISTS Students;
   DROP TABLE IF EXISTS UserCompletion;
   DROP TABLE IF EXISTS FitnessChallenge;
+  DROP TABLE IF EXISTS UserSpells;
+  DROP TABLE IF EXISTS SpellShop;
   DROP TABLE IF EXISTS User;
 
   SET FOREIGN_KEY_CHECKS = 1;
 
   -- ======================
-  -- USERS
+  -- USERS (NO FK YET)
   -- ======================
   CREATE TABLE User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,12 +27,12 @@ bcrypt.hash('1234', 10, (err, hash) => {
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     skillpoints INT DEFAULT 0,
-      active_spell_id INT NULL,
-  active_spell_uses INT DEFAULT 0
+    active_spell_id INT NULL,
+    active_spell_uses INT DEFAULT 0
   );
 
   -- ======================
-  -- SPELL SHOP (MASTER DATA)
+  -- SPELL SHOP
   -- ======================
   CREATE TABLE SpellShop (
     spell_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,7 +41,16 @@ bcrypt.hash('1234', 10, (err, hash) => {
   );
 
   -- ======================
-  -- USER SPELLS (OWNED + ACTIVE + USAGE)
+  -- ADD FK AFTER BOTH TABLES EXIST
+  -- ======================
+  ALTER TABLE User
+    ADD CONSTRAINT fk_user_active_spell
+    FOREIGN KEY (active_spell_id)
+    REFERENCES SpellShop(spell_id)
+    ON DELETE SET NULL;
+
+  -- ======================
+  -- USER SPELLS
   -- ======================
   CREATE TABLE UserSpells (
     user_spell_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,23 +59,22 @@ bcrypt.hash('1234', 10, (err, hash) => {
     uses_remaining INT DEFAULT 3,
     is_active BOOLEAN DEFAULT FALSE,
     acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     UNIQUE (user_id, spell_id),
-    FOREIGN KEY (user_id) REFERENCES User(user_id),
-    FOREIGN KEY (spell_id) REFERENCES SpellShop(spell_id)
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (spell_id) REFERENCES SpellShop(spell_id) ON DELETE CASCADE
   );
 
   -- ======================
   -- FITNESS CHALLENGES
   -- ======================
   CREATE TABLE FitnessChallenge (
-      challenge_id INT AUTO_INCREMENT PRIMARY KEY,
-  creator_id INT NOT NULL,
-  challenge TEXT NOT NULL,
-  difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
-  skillpoints INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (creator_id) REFERENCES User(user_id)
+    challenge_id INT AUTO_INCREMENT PRIMARY KEY,
+    creator_id INT NOT NULL,
+    challenge TEXT NOT NULL,
+    difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+    skillpoints INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_id) REFERENCES User(user_id) ON DELETE CASCADE
   );
 
   -- ======================
@@ -89,90 +89,8 @@ bcrypt.hash('1234', 10, (err, hash) => {
     creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
     UNIQUE (challenge_id, user_id),
-    FOREIGN KEY (challenge_id) REFERENCES FitnessChallenge(challenge_id),
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
-  );
-
-  -- ======================
-  -- STUDENTS (LEGACY / EXTENSION)
-  -- ======================
-  CREATE TABLE Students (
-    student_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    magic_exp INT DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
-  );
-
-  -- ======================
-  -- CLASSES
-  -- ======================
-  CREATE TABLE Classes (
-    class_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    required_spell_id INT NOT NULL,
-    min_magic_exp INT NOT NULL,
-    FOREIGN KEY (required_spell_id) REFERENCES SpellShop(spell_id)
-  );
-
-  -- ======================
-  -- CLASS ENROLLMENT
-  -- ======================
-  CREATE TABLE ClassEnrollment (
-    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    class_id INT NOT NULL,
-    student_id INT NOT NULL,
-    time_enrolled TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (class_id, student_id),
-    FOREIGN KEY (class_id) REFERENCES Classes(class_id),
-    FOREIGN KEY (student_id) REFERENCES Students(student_id)
-  );
-
-  -- ======================
-  -- INGREDIENTS
-  -- ======================
-  CREATE TABLE Ingredients (
-    ingredient_id INT AUTO_INCREMENT PRIMARY KEY,
-    class_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    magic_exp INT NOT NULL,
-    FOREIGN KEY (class_id) REFERENCES Classes(class_id)
-  );
-
-  -- ======================
-  -- STUDENT INGREDIENTS
-  -- ======================
-  CREATE TABLE StudentIngredients (
-    student_ingredient_id INT AUTO_INCREMENT PRIMARY KEY,
-    ingredient_id INT NOT NULL,
-    student_id INT NOT NULL,
-    quantity INT DEFAULT 1,
-    UNIQUE (ingredient_id, student_id),
-    FOREIGN KEY (ingredient_id) REFERENCES Ingredients(ingredient_id),
-    FOREIGN KEY (student_id) REFERENCES Students(student_id)
-  );
-
-  -- ======================
-  -- USER RESOURCES
-  -- ======================
-  CREATE TABLE UserResources (
-    user_resource_id INT AUTO_INCREMENT PRIMARY KEY,
-    resource_name VARCHAR(100) NOT NULL,
-    user_id INT NOT NULL,
-    quantity INT DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
-  );
-
-  -- ======================
-  -- REVIEWS
-  -- ======================
-  CREATE TABLE Reviews (
-    review_id INT AUTO_INCREMENT PRIMARY KEY,
-    review_amt INT NOT NULL,
-    review_text TEXT NOT NULL,
-    user_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES User(user_id)
+    FOREIGN KEY (challenge_id) REFERENCES FitnessChallenge(challenge_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
   );
 
   -- ======================
@@ -190,18 +108,13 @@ bcrypt.hash('1234', 10, (err, hash) => {
   ('Celestial Grimoire', 500),
   ('Void Arcana', 600),
   ('Archmage Rite', 700);
-
-  INSERT INTO Classes (name, required_spell_id, min_magic_exp) VALUES
-  ('Elemental Studies', 1, 0),
-  ('Teleportation Theory', 2, 1000),
-  ('Advanced Summoning', 3, 5000);
   `;
 
   pool.query(SQLSTATEMENT, (error) => {
     if (error) {
       console.error("❌ Error creating tables:", error);
     } else {
-      console.log("✅ Tables created successfully (3-use spell system)");
+      console.log("✅ Tables created successfully (clean core schema)");
     }
     process.exit();
   });

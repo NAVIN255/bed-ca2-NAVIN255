@@ -1,172 +1,241 @@
-# 🔮 Magical Wellness Challenge
+🔮 Magical Wellness Challenge — CA2
 
-A beautiful, magical-themed wellness challenge application with gamification features.
+A wellness challenge web application enhanced with gamification features.
+Users earn skillpoints by completing wellness challenges and use them to unlock and activate spells that provide gameplay advantages.
 
-## 🚀 Quick Start
+This project extends the backend system developed in CA1, with a strong focus on frontend–backend integration, user experience, and secure authentication.
 
-### Option 1: Use the Startup Script (Recommended)
-1. Double-click `start-backend.bat` in the root directory
-2. Open `frontend/index.html` in your web browser
-3. Use test account: `test@lol.com` / `1234`
+🎯 Project Objectives
 
-### Option 2: Manual Setup
-1. Open terminal and navigate to the backend folder:
-   ```bash
-   cd backend
-   npm install  # Only needed first time
-   npm run dev
-   ```
-2. Open `frontend/index.html` in your web browser
+Build a complete wellness challenge application
 
-## 🧪 Testing
+Integrate frontend features with an existing backend
 
-### Test Backend Connection
-- Open `frontend/test-backend.html` to test if the backend is working
+Implement secure authentication using JWT and BCrypt
 
-### Test Frontend Functions
-- Open `frontend/test-dashboard.html` to test dashboard functions without backend
+Apply gamification concepts such as points, spells, and progress tracking
 
-### Test Full Application
-1. Start backend server
-2. Open `frontend/index.html`
-3. Register a new account or use test account: `test@lol.com` / `1234`
+Design an intuitive and visually appealing user interface
 
-## 🎯 Features
+🚀 Quick Start
+Option 1: Startup Script (Windows – Recommended)
 
-- **🔐 Authentication**: Login/Register with JWT tokens
-- **🎯 Challenge System**: Create and complete wellness challenges
-- **🏆 Gamification**: Points, levels, and magical rewards
-- **🛒 Magical Shop**: Purchase spells, ingredients, and resources
-- **📊 Progress Tracking**: Monitor your wellness journey
-- **✨ Beautiful UI**: Magical theme with gradients and animations
+Double-click start-backend.bat
 
-## 🔧 Technical Stack
+Open frontend/index.html in your browser
 
-### Backend
-- **Node.js** with Express
-- **MySQL** database
-- **JWT** authentication
-- **Bcrypt** password hashing
-- **CORS** enabled
+Login using the test account:
 
-### Frontend
-- **Vanilla JavaScript** (no frameworks)
-- **CSS3** with custom magical theme
-- **Responsive design**
-- **Modular architecture**
+Email: test@lol.com
+Password: 1234
 
-## 📁 Project Structure
+Option 2: Manual Setup
+Backend
+cd backend
+npm install       # First time only
+npm start
 
-```
-├── backend/
-│   ├── src/
-│   │   ├── controllers/     # API controllers
-│   │   ├── routes/         # API routes
-│   │   ├── middleware/     # Auth & validation
-│   │   ├── models/         # Database models
-│   │   └── services/       # Database connection
-│   ├── package.json
-│   └── .env               # Environment variables
-├── frontend/
-│   ├── css/               # Stylesheets
-│   ├── js/
-│   │   ├── utils/         # Utility functions
-│   │   ├── services/      # API service
-│   │   └── *.js          # Page scripts
-│   ├── tests/            # Test files
-│   ├── index.html        # Login page
-│   ├── register.html     # Registration page
-│   ├── dashboard.html    # Main dashboard
-│   ├── test-backend.html # Backend testing
-│   └── test-dashboard.html # Frontend testing
-└── start-backend.bat     # Windows startup script
-```
 
-## 🐛 Troubleshooting
+Backend runs at:
 
-### Backend Issues
+http://localhost:3000
 
-**❌ "npm run dev" not working**
-- Make sure you're in the `backend` directory
-- Run `npm install` first if you haven't
+Database Initialization
 
-**❌ Server starts but exits immediately**
-- Check if MySQL is running (if using local database)
-- Check the `.env` file in backend folder
+⚠️ This will reset all database tables:
 
-**❌ Database connection errors**
-- Update database credentials in `backend/.env`
-- Make sure MySQL server is running
+node src/configs/initTables.js
 
-### Frontend Issues
+Frontend
 
-**❌ Buttons not working**
-- Make sure backend server is running on port 3000
-- Check browser console for JavaScript errors
-- Try the test pages first
+Open:
 
-**❌ Login not working**
-- Test backend connection with `test-backend.html`
-- Create a new account if test account doesn't exist
-- Check network tab in browser dev tools
+frontend/index.html
 
-**❌ CORS errors**
-- Backend has CORS enabled
-- Make sure you're not opening files directly (use a local server)
 
-## 🎮 Test Accounts
+(Recommended: Live Server)
 
-- **Email**: test@lol.com
-- **Password**: 1234
+🧪 Test Account
+Email	Password
+test@lol.com
+	1234
+✨ Core Features
+🔐 Authentication & Security
 
-## 🌟 API Endpoints
+User registration and login
 
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/register` - User registration
-- `POST /api/refresh` - Refresh token
+Password hashing with BCrypt
 
-### Challenges
-- `GET /api/challenges` - Get all challenges
-- `POST /api/challenges` - Create new challenge
-- `PUT /api/challenges/:id` - Update challenge
-- `DELETE /api/challenges/:id` - Delete challenge
+JWT access and refresh tokens
 
-### Gamification
-- `GET /api/spells` - Get all spells
-- `GET /api/ingredients` - Get all ingredients
-- `GET /api/resources` - Get all resources
-- `GET /api/user-resources/:userId` - Get user's resources
+Protected API routes
 
-## 🔮 Magic Features
+Secure session handling
 
-- **Magical Theme**: Beautiful gradients and mystical colors
-- **Responsive Design**: Works on desktop and mobile
-- **Real-time Notifications**: Success/error messages with animations
-- **Gamification**: Points, levels, and magical rewards
-- **Progress Tracking**: Visual progress bars and statistics
-- **Modal System**: Beautiful popup modals for interactions
+🎯 Wellness Challenge Management
 
-## 📝 Development Notes
+Users can:
 
-- Frontend uses vanilla JavaScript for maximum compatibility
-- Modular architecture with separate utility files
-- Error handling with user-friendly messages
-- Token-based authentication with refresh tokens
-- Responsive design with mobile-first approach
+Create wellness challenges
 
-## 🤝 Contributing
+Select difficulty levels (Easy / Medium / Hard)
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+Earn skillpoints upon completion
 
-## 📄 License
+Track active and completed challenges
 
-This project is for educational purposes.
+🔮 Gamification System
 
----
+Spell shop with point requirements
 
-**Happy Coding! 🔮✨**
+Users can own multiple spells
+
+One active spell at a time
+
+Limited-use spell activation
+
+Spells provide gameplay advantages
+
+📊 Progress Tracking
+
+Total skillpoints
+
+Active & completed challenges
+
+Level progression bar
+
+Badge display
+
+🔧 Technology Stack
+Backend
+
+Node.js
+
+Express.js
+
+MySQL
+
+JWT Authentication
+
+BCrypt Password Hashing
+
+MVC Architecture
+
+Frontend
+
+HTML5
+
+CSS3 (Custom Magical Theme)
+
+Vanilla JavaScript
+
+Fetch API
+
+DOM Manipulation
+
+Responsive Design
+
+📁 Project Structure
+backend/
+ ├── src/
+ │   ├── configs/          # Database initialization
+ │   ├── controllers/      # Business logic
+ │   ├── middleware/       # Auth & validation
+ │   ├── models/           # Database queries
+ │   ├── routes/           # API routing
+ │   ├── services/         # Database connection
+ │   ├── app.js
+ │   └── index.js
+ ├── .env
+ └── package.json
+
+frontend/
+ ├── css/
+ │   └── magical-theme.css
+ ├── js/
+ │   ├── services/
+ │   │   └── APIService.js
+ │   ├── dashboard-fixed.js
+ │   ├── api.js
+ │   └── register.js
+ ├── index.html
+ ├── register.html
+ ├── dashboard.html
+ └── profile.html
+
+🌐 API Endpoints Overview
+Authentication
+
+POST /api/login
+
+POST /api/register
+
+POST /api/refresh
+
+User
+
+GET /api/users/profile
+
+Challenges
+
+GET /api/challenges
+
+POST /api/challenges
+
+POST /api/challenges/:id/completions
+
+Gamification
+
+GET /api/spells
+
+POST /api/spells/activate
+
+🛡️ Security Practices
+
+Passwords hashed using BCrypt
+
+JWT used for session management
+
+Token verification middleware
+
+Backend validation for all sensitive operations
+
+Server-controlled skillpoint updates
+
+🎥 Video Demonstration
+
+An unlisted YouTube video is included in the report, demonstrating:
+
+Features available before login
+
+User registration and login flow
+
+Challenge creation and completion
+
+Spell activation and gamification system
+
+🧹 Code Quality & Modularity
+
+MVC architecture applied on backend
+
+Unused legacy tables and routes removed
+
+Modular frontend JavaScript files
+
+Consistent naming conventions
+
+Clear separation of concerns
+
+📘 Version Control
+
+GitHub Classroom repository used
+
+Regular commits with clear messages
+
+README provided for setup and usage
+
+👨‍🎓 Author
+
+Navin
+BED CA2 – Magical Wellness Challenge
+Singapore Polytechnic

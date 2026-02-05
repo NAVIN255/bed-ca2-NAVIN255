@@ -28,19 +28,57 @@ const getCompletedCount = (req, res) => {
 };
 
 /* =====================================================
-   CREATE CHALLENGE
+   CREATE CHALLENGE (FINAL FIXED VERSION)
 ===================================================== */
 const createNewChallenge = (req, res) => {
-  const { challenge, skillpoints } = req.body;
-  if (!challenge || !skillpoints) {
-    return res.status(400).json({ message: "Missing fields" });
+  const { challenge, difficulty } = req.body;
+  const userId = res.locals.userId;
+
+  console.log("CREATE CHALLENGE BODY:", req.body); // 🔍 DEBUG
+
+  // Validation
+  if (!challenge || !difficulty) {
+    return res.status(400).json({ message: "Missing challenge or difficulty" });
   }
 
+  if (challenge.trim().length < 20) {
+    return res.status(400).json({
+      message: "Challenge description must be at least 20 characters"
+    });
+  }
+
+  // Server-controlled difficulty → points
+  const POINTS_MAP = {
+    easy: 20,
+    medium: 50,
+    hard: 100
+  };
+
+  const skillpoints = POINTS_MAP[difficulty];
+  if (!skillpoints) {
+    return res.status(400).json({ message: "Invalid difficulty" });
+  }
+
+  // Insert challenge (difficulty INCLUDED ✅)
   model.insertSingle(
-    { challenge, skillpoints, creator_id: res.locals.userId },
+    {
+      challenge: challenge.trim(),
+      difficulty,
+      skillpoints,
+      creator_id: userId
+    },
     (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.status(201).json({ challenge_id: result.insertId });
+      if (err) {
+        console.error("Insert failed:", err);
+        return res.status(500).json({ message: "Failed to create challenge" });
+      }
+
+      res.status(201).json({
+        message: "Challenge created successfully",
+        challenge_id: result.insertId,
+        difficulty,
+        skillpoints
+      });
     }
   );
 };
@@ -95,9 +133,6 @@ const readChallengeSkillpoints = (req, res, next) => {
   );
 };
 
-/* =====================================================
-   SPELL BONUS + DECREMENT (FINAL)
-===================================================== */
 const applySpellBonus = (req, res, next) => {
   pool.query(
     "SELECT active_spell_id, active_spell_uses FROM User WHERE user_id = ?",
@@ -162,7 +197,7 @@ const readCompletionByChallengeId = (req, res) => {
 };
 
 /* =====================================================
-   EXPORT (THIS FIXES THE CRASH)
+   EXPORTS
 ===================================================== */
 module.exports = {
   readActiveChallengesForUser,
@@ -175,64 +210,4 @@ module.exports = {
   updateUserSkillpoints,
   readCompletionById,
   readCompletionByChallengeId
-};
-
-module.exports.createNewChallenge = (req, res) => {
-  const { challenge, difficulty } = req.body;
-  const userId = res.locals.userId;
-
-  if (!challenge || !difficulty) {
-    return res.status(400).json({ message: "Missing data" });
-  }
-
-  if (challenge.length < 20) {
-    return res.status(400).json({
-      message: "Challenge description too short"
-    });
-  }
-
-  const POINTS_MAP = {
-    easy: 20,
-    medium: 50,
-    hard: 100
-  };
-
-  const skillpoints = POINTS_MAP[difficulty];
-
-  if (!skillpoints) {
-    return res.status(400).json({ message: "Invalid difficulty" });
-  }
-
-  // 🔒 Limit 3 challenges per day
-  const limitSql = `
-    SELECT COUNT(*) AS count
-    FROM FitnessChallenge
-    WHERE creator_id = ?
-      AND DATE(created_at) = CURDATE();
-  `;
-
-  require("../services/db").query(limitSql, [userId], (err, rows) => {
-    if (err) return res.status(500).json(err);
-
-    if (rows[0].count >= 3) {
-      return res.status(403).json({
-        message: "Daily challenge limit reached"
-      });
-    }
-
-    const data = {
-      challenge,
-      skillpoints,
-      creator_id: userId
-    };
-
-    model.insertSingle(data, (err, result) => {
-      if (err) return res.status(500).json(err);
-
-      res.status(201).json({
-        message: "Challenge created",
-        challenge_id: result.insertId
-      });
-    });
-  });
 };

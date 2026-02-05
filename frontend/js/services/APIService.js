@@ -58,10 +58,12 @@ class APIService {
 async createChallenge(challengeData) {
   return this.makeAuthenticatedRequest("/challenges", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(challengeData)
   });
 }
-
   async updateChallenge(id, challengeData) {
     return this.makeAuthenticatedRequest(`/challenges/${id}`, {
       method: 'PUT',
@@ -184,7 +186,6 @@ async makeRequest(endpoint, options = {}) {
     }
   };
 
-  // ✅ Only attach body if it exists
   if (options.body) {
     requestOptions.body = options.body;
   }
@@ -193,23 +194,20 @@ async makeRequest(endpoint, options = {}) {
   return this.handleResponse(response);
 }
 
-  async makeAuthenticatedRequest(endpoint, options = {}) {
-  // If no token, force login
+ async makeAuthenticatedRequest(endpoint, options = {}) {
   if (!this.token) {
     alert("Please log in again");
     window.location.href = "index.html";
     throw new Error("Not authenticated");
   }
 
-  const authOptions = {
+  return this.makeRequest(endpoint, {
     ...options,
     headers: {
-      ...options.headers,
+      ...(options.headers || {}),
       Authorization: `Bearer ${this.token}`
     }
-  };
-
-  return this.makeRequest(endpoint, authOptions);
+  });
 }
 
   async handleResponse(response) {

@@ -23,10 +23,7 @@
           <li><button class="btn btn-link" onclick="showChallenges()">🎯 Challenges</button></li>
           <li><button class="btn btn-link" onclick="showGamificationSection()">🛒 Shop</button></li>
           <li><button class="btn btn-link" onclick="showProgressSection()">📊 Progress</button></li>
-
-          <!-- ✅ NEW -->
           <li><a href="profile.html" class="btn btn-link">👤 Profile</a></li>
-
           <li><button id="logoutBtn" class="btn btn-secondary btn-sm">✨ Logout</button></li>
         </ul>
       </nav>
@@ -38,15 +35,15 @@
 <main class="main-content">
   <div class="container">
 
-    <!-- ===== Welcome ===== -->
-    <section class="welcome-section">
-      <div class="card magical-glow">
-        <h1 id="welcome">🌟 Welcome back!</h1>
-        <p>Your wellness journey continues ✨</p>
+    <!-- ===== WELCOME ===== -->
+    <section class="welcome-section fade-in">
+      <div class="card magical-glow text-center">
+        <h1>🌟 Welcome back, adventurer!</h1>
+        <p>Complete challenges, earn points, and unlock magical powers ✨</p>
       </div>
     </section>
 
-    <!-- ===== Stats ===== -->
+    <!-- ===== STATS ===== -->
     <section class="stats-section">
       <div class="stats-grid">
 
@@ -68,63 +65,67 @@
           <div class="stat-label">Active</div>
         </div>
 
-        <!-- 🔮 ACTIVE SPELL + USES -->
         <div class="stat-card">
           <div class="stat-icon">🔮</div>
-
-          <!-- JS will update this -->
-          <div class="stat-number" id="activeSpell">
-            None
-          </div>
-
+          <div class="stat-number" id="activeSpell">None</div>
           <div class="stat-label">Active Spell</div>
-
-          <!-- 🔥 Uses indicator -->
-          <div class="badge badge-info mt-1 hidden" id="activeSpellUses">
-            🔥 0 / 3
+          <div id="activeSpellUses" class="badge badge-info mt-1 hidden">
+            🔥 0 / 3 uses
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- ===== Quick Actions ===== -->
+    <!-- ===== QUICK ACTIONS ===== -->
     <section class="quick-actions">
       <div class="card">
-        <h2>🚀 Quick Actions</h2>
+        <h2 class="mb-2">🚀 Quick Actions</h2>
+
         <div class="grid grid-3">
-          <button class="btn btn-primary" onclick="openCreateChallengeModal()">➕ Create Challenge</button>
-          <button class="btn btn-success" onclick="showGamificationSection()">🛒 Shop</button>
-          <button class="btn btn-warning" onclick="showProgressSection()">📊 Progress</button>
+          <button class="quick-action-card primary" onclick="openCreateChallengeModal()">
+            <span class="qa-icon">➕</span>
+            <span>Create Challenge</span>
+          </button>
+
+          <button class="quick-action-card success" onclick="showGamificationSection()">
+            <span class="qa-icon">🛒</span>
+            <span>Wellness Shop</span>
+          </button>
+
+          <button class="quick-action-card warning" onclick="showProgressSection()">
+            <span class="qa-icon">📊</span>
+            <span>View Progress</span>
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- ===== Challenges ===== -->
+    <!-- ===== CHALLENGES ===== -->
     <section id="challenges">
       <div class="card">
         <h2>🎯 Active Challenges</h2>
-        <div id="challengeList" class="grid grid-2">
+        <div id="challengeList" class="grid grid-2 mt-2">
           <p>Loading challenges...</p>
         </div>
       </div>
     </section>
 
-    <!-- ===== Shop ===== -->
+    <!-- ===== SHOP ===== -->
     <section id="gamification" class="hidden">
       <div class="card">
         <h2>🛒 Wellness Shop</h2>
-        <p>Spend points to gain magical advantages ✨</p>
+        <p class="mb-2">Spend points to gain magical advantages ✨</p>
         <div id="shopContent" class="grid grid-3"></div>
       </div>
     </section>
 
-    <!-- ===== Progress ===== -->
+    <!-- ===== PROGRESS ===== -->
     <section id="progress" class="hidden">
       <div class="card">
         <h2>📊 Progress Overview</h2>
 
-        <h3>🏆 Level Progress</h3>
+        <h3 class="mt-2">🏆 Level Progress</h3>
         <div class="progress-bar">
           <div id="levelProgressBar" class="progress-fill" style="width: 0%"></div>
         </div>
@@ -134,32 +135,42 @@
           <strong>🏅 Badges</strong>
           <div id="badgeList" class="mt-1"></div>
         </div>
-
       </div>
     </section>
 
   </div>
 </main>
 
-<!-- ================= CREATE MODAL ================= -->
+<!-- ================= CREATE CHALLENGE MODAL ================= -->
 <div id="createChallengeModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
-      <h3>Create New Challenge</h3>
+      <h3 class="modal-title">➕ Create New Challenge</h3>
       <button class="modal-close" onclick="closeCreateChallengeModal()">&times;</button>
     </div>
 
     <div class="modal-body">
       <form id="createChallengeForm">
-        <label>Challenge Description</label>
-        <textarea name="challenge" required></textarea>
 
-        <label>Difficulty</label>
-<select name="difficulty" required>
-  <option value="easy">Easy (20 pts)</option>
-  <option value="medium">Medium (50 pts)</option>
-  <option value="hard">Hard (100 pts)</option>
-</select>
+        <div class="form-group">
+          <label class="form-label">📝 Challenge Description</label>
+          <textarea
+            name="challenge"
+            class="form-input"
+            placeholder="Describe a meaningful wellness challenge (min 20 characters)"
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⚔️ Difficulty</label>
+          <select name="difficulty" class="form-input" required>
+            <option value="easy">Easy · 20 pts</option>
+            <option value="medium">Medium · 50 pts</option>
+            <option value="hard">Hard · 100 pts</option>
+          </select>
+        </div>
+
       </form>
     </div>
 

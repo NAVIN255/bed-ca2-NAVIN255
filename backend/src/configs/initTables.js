@@ -68,11 +68,13 @@ bcrypt.hash('1234', 10, (err, hash) => {
   -- FITNESS CHALLENGES
   -- ======================
   CREATE TABLE FitnessChallenge (
-    challenge_id INT AUTO_INCREMENT PRIMARY KEY,
-    creator_id INT NOT NULL,
-    challenge TEXT NOT NULL,
-    skillpoints INT NOT NULL,
-    FOREIGN KEY (creator_id) REFERENCES User(user_id)
+      challenge_id INT AUTO_INCREMENT PRIMARY KEY,
+  creator_id INT NOT NULL,
+  challenge TEXT NOT NULL,
+  difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+  skillpoints INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (creator_id) REFERENCES User(user_id)
   );
 
   -- ======================

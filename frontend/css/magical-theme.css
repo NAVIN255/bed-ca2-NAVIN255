@@ -867,3 +867,50 @@ body::before {
 
 .w-full { width: 100%; }
 .h-full { height: 100%; }
+
+/* =========================================
+   🔥 DIFFICULTY-BASED CHALLENGE STYLING
+========================================= */
+
+/* Left border color by difficulty */
+.challenge-card[data-difficulty="easy"] {
+  border-left-color: var(--success-color);
+}
+
+.challenge-card[data-difficulty="medium"] {
+  border-left-color: var(--warning-color);
+}
+
+.challenge-card[data-difficulty="hard"] {
+  border-left-color: var(--error-color);
+}
+
+/* Magical hover glow per difficulty */
+.challenge-card[data-difficulty="easy"]:hover {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+.challenge-card[data-difficulty="medium"]:hover {
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.6);
+}
+
+.challenge-card[data-difficulty="hard"]:hover {
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.7);
+}
+
+/* Difficulty badge enhancement */
+.challenge-card .badge {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Optional: pulse hard challenges (subtle) */
+@keyframes dangerPulse {
+  0% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+  100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
+}
+
+.challenge-card[data-difficulty="hard"] {
+  animation: dangerPulse 3s ease-in-out infinite;
+}

@@ -66,7 +66,6 @@ async function loadUserProfile() {
     updateLevelProgress();
     renderBadges();
     updateActiveSpellDisplay();
-
   } catch (err) {
     console.error("Failed to load profile:", err);
   }
@@ -76,14 +75,9 @@ async function loadUserProfile() {
 // STATS
 // ===============================
 function updateStatsDisplay() {
-  document.getElementById("totalPoints").textContent =
-    userStats.totalPoints;
-
-  document.getElementById("completedChallenges").textContent =
-    userStats.completedChallenges;
-
-  document.getElementById("activeChallenges").textContent =
-    userStats.activeChallenges;
+  document.getElementById("totalPoints").textContent = userStats.totalPoints;
+  document.getElementById("completedChallenges").textContent = userStats.completedChallenges;
+  document.getElementById("activeChallenges").textContent = userStats.activeChallenges;
 }
 
 // ===============================
@@ -97,16 +91,13 @@ function updateActiveSpellDisplay() {
 
   if (!userStats.activeSpellId) {
     spellEl.textContent = "None";
-    if (usesEl) usesEl.classList.add("hidden");
+    usesEl?.classList.add("hidden");
     return;
   }
 
   spellEl.textContent = `🔥 ${userStats.activeSpellName}`;
-
-  if (usesEl) {
-    usesEl.textContent = `🔥 ${userStats.activeSpellUses} / 3 uses`;
-    usesEl.classList.remove("hidden");
-  }
+  usesEl.textContent = `🔥 ${userStats.activeSpellUses} / 3 uses`;
+  usesEl.classList.remove("hidden");
 }
 
 // ===============================
@@ -125,7 +116,6 @@ function updateLevelProgress() {
 
   const bar = document.getElementById("levelProgressBar");
   const text = document.getElementById("levelProgressText");
-  if (!bar || !text) return;
 
   if (!nextLevel) {
     bar.style.width = "100%";
@@ -138,17 +128,14 @@ function updateLevelProgress() {
       (nextLevel.required - currentLevel.required)) * 100;
 
   bar.style.width = `${Math.round(progress)}%`;
-  text.textContent =
-    `${userStats.totalPoints} / ${nextLevel.required} points to Level ${nextLevel.level}`;
+  text.textContent = `${userStats.totalPoints} / ${nextLevel.required} points to Level ${nextLevel.level}`;
 }
 
 function renderBadges() {
   const badgeList = document.getElementById("badgeList");
-  if (!badgeList) return;
 
   if (!userStats.badges.length) {
-    badgeList.innerHTML =
-      "<span class='badge badge-info'>No badges yet</span>";
+    badgeList.innerHTML = "<span class='badge badge-info'>No badges yet</span>";
     return;
   }
 
@@ -161,19 +148,25 @@ function renderBadges() {
 // CHALLENGES
 // ===============================
 async function loadChallenges() {
-  try {
-    currentChallenges = await apiService.getChallenges();
-    userStats.activeChallenges = currentChallenges.length;
-    updateStatsDisplay();
-    renderChallenges();
-  } catch (err) {
-    console.error("Load challenges error:", err);
-  }
+  currentChallenges = await apiService.getChallenges();
+  userStats.activeChallenges = currentChallenges.length;
+  updateStatsDisplay();
+  renderChallenges();
+}
+
+function getDifficultyBadge(difficulty) {
+  const map = {
+    easy: { label: "Easy", class: "badge-success" },
+    medium: { label: "Medium", class: "badge-warning" },
+    hard: { label: "Hard", class: "badge-danger" }
+  };
+
+  const d = map[difficulty] || { label: "Unknown", class: "badge-info" };
+  return `<span class="badge ${d.class}">${d.label}</span>`;
 }
 
 function renderChallenges() {
   const list = document.getElementById("challengeList");
-  if (!list) return;
 
   if (!currentChallenges.length) {
     list.innerHTML = "<p>No active challenges</p>";
@@ -181,9 +174,12 @@ function renderChallenges() {
   }
 
   list.innerHTML = currentChallenges.map(c => `
-    <div class="challenge-card">
-      <h4>${c.challenge}</h4>
-      <p>${c.skillpoints} points</p>
+    <div class="challenge-card" data-difficulty="${c.difficulty}">
+      <div class="challenge-header">
+        <h4>${c.challenge}</h4>
+        ${getDifficultyBadge(c.difficulty)}
+      </div>
+      <p>🎯 ${c.skillpoints} points</p>
       <button class="btn btn-success btn-sm"
         onclick="completeChallenge(${c.challenge_id})">
         Complete
@@ -193,21 +189,16 @@ function renderChallenges() {
 }
 
 async function completeChallenge(id) {
-  try {
-    await apiService.completeChallenge(id, {
-      completed: true,
-      review_amt: 5,
-      notes: "Completed"
-    });
+  await apiService.completeChallenge(id, {
+    completed: true,
+    review_amt: 5,
+    notes: "Completed"
+  });
 
-    await loadUserProfile();
-    await loadChallenges();
-    await loadCompletedCount();
-
-    alert("🎉 Challenge completed!");
-  } catch {
-    alert("Failed to complete challenge");
-  }
+  await loadUserProfile();
+  await loadChallenges();
+  await loadCompletedCount();
+  alert("🎉 Challenge completed!");
 }
 
 // ===============================
@@ -215,35 +206,42 @@ async function completeChallenge(id) {
 // ===============================
 async function loadCompletedCount() {
   const res = await apiService.makeAuthenticatedRequest(
-    "/challenges/completed/count",
-    { method: "GET" }
+    "/challenges/completed/count"
   );
 
-  userStats.completedChallenges =
-    res.completedChallenges || 0;
-
+  userStats.completedChallenges = res.completedChallenges || 0;
   updateStatsDisplay();
 }
 
 // ===============================
-// SPELL SHOP
+// 🔮 SPELL SHOP (OWNED SPELLS ONLY – FIXED)
 // ===============================
 async function loadSpells() {
-  const spells = await apiService.getSpells();
   const shop = document.getElementById("shopContent");
-  if (!shop) return;
 
-  shop.innerHTML = spells.map(spell => {
+  // 1️⃣ Get ALL spells (shop)
+  const allSpells = await apiService.getSpells();
+
+  // 2️⃣ Get OWNED spells
+  const ownedSpells = await apiService.makeAuthenticatedRequest("/spells/user");
+
+  const ownedIds = ownedSpells.map(s => s.spell_id);
+
+  shop.innerHTML = allSpells.map(spell => {
+    const owned = ownedIds.includes(spell.spell_id);
     const isActive = spell.spell_id === userStats.activeSpellId;
-    const canAfford =
-      userStats.totalPoints >= spell.skillpoint_required;
+    const canAfford = userStats.totalPoints >= spell.skillpoint_required;
 
-    let buttonText = "Activate";
+    let buttonText = "Buy";
     let disabled = false;
+    let action = `buySpell(${spell.spell_id})`;
 
-    if (isActive) {
+    if (owned && isActive) {
       buttonText = "✅ Active";
       disabled = true;
+    } else if (owned) {
+      buttonText = "Activate";
+      action = `activateSpell(${spell.spell_id})`;
     } else if (!canAfford) {
       buttonText = "❌ Not enough points";
       disabled = true;
@@ -255,13 +253,14 @@ async function loadSpells() {
         <p>Cost: ${spell.skillpoint_required} points</p>
         <button class="btn btn-primary btn-sm"
           ${disabled ? "disabled" : ""}
-          onclick="activateSpell(${spell.spell_id})">
+          onclick="${action}">
           ${buttonText}
         </button>
       </div>
     `;
   }).join("");
 }
+
 
 async function activateSpell(id) {
   await apiService.makeAuthenticatedRequest("/spells/activate", {
@@ -299,16 +298,14 @@ function showProgressSection() {
 }
 
 // ===============================
-// CREATE CHALLENGE MODAL (🔥 FIXED)
+// CREATE CHALLENGE MODAL
 // ===============================
 function openCreateChallengeModal() {
-  document.getElementById("createChallengeModal")
-    ?.classList.add("show");
+  document.getElementById("createChallengeModal")?.classList.add("show");
 }
 
 function closeCreateChallengeModal() {
-  document.getElementById("createChallengeModal")
-    ?.classList.remove("show");
+  document.getElementById("createChallengeModal")?.classList.remove("show");
 }
 
 async function createChallenge() {
@@ -328,6 +325,19 @@ async function createChallenge() {
   closeCreateChallengeModal();
   await loadChallenges();
 }
+
+async function buySpell(id) {
+  await apiService.makeAuthenticatedRequest("/spells/buy", {
+    method: "POST",
+    body: JSON.stringify({ spell_id: id })
+  });
+
+  alert("✨ Spell purchased!");
+  await loadUserProfile();
+  await loadSpells();
+}
+
+
 // ===============================
 // LOGOUT
 // ===============================

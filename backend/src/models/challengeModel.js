@@ -50,20 +50,20 @@ module.exports.readUserChallenges = (data, callback) =>
 ///////////////////////////////////////////////////////
 // Insert a new fitness challenge
 ///////////////////////////////////////////////////////
-module.exports.insertSingle = (data, callback) =>
-{
-    const SQLSTATEMENT = `
-        INSERT INTO FitnessChallenge (challenge, creator_id, skillpoints)
-        VALUES (?, ?, ?);
-    `;
+module.exports.insertSingle = (data, callback) => {
+  const SQLSTATEMENT = `
+    INSERT INTO FitnessChallenge (challenge, difficulty, skillpoints, creator_id)
+    VALUES (?, ?, ?, ?);
+  `;
 
-    const VALUES = [
-        data.challenge,
-        data.creator_id,
-        data.skillpoints
-    ];
+  const VALUES = [
+    data.challenge,
+    data.difficulty,
+    data.skillpoints,
+    data.creator_id
+  ];
 
-    pool.query(SQLSTATEMENT, VALUES, callback);
+  pool.query(SQLSTATEMENT, VALUES, callback);
 };
 
 ///////////////////////////////////////////////////////

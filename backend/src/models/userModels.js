@@ -43,17 +43,25 @@ module.exports.selectAll = (callback) => {
   );
 };
 
+///////////////////////////////////////////////////////
+// Read user by ID (WITH ACTIVE SPELL INFO)
+///////////////////////////////////////////////////////
 module.exports.readUserById = (data, callback) => {
   const SQL = `
     SELECT 
-  user_id,
-  username,
-  email,
-  skillpoints,
-  active_spell_id
-FROM User
-WHERE user_id = ?;
+      u.user_id,
+      u.username,
+      u.email,
+      u.skillpoints,
+      u.active_spell_id,
+      u.active_spell_uses,
+      s.name AS active_spell_name
+    FROM User u
+    LEFT JOIN SpellShop s
+      ON u.active_spell_id = s.spell_id
+    WHERE u.user_id = ?;
   `;
+
   db.query(SQL, [data.user_id], callback);
 };
 
@@ -151,4 +159,29 @@ module.exports.checkUserOwnsSpell = (data, callback) => {
     WHERE user_id = ? AND spell_id = ?;
   `;
   db.query(SQL, [data.user_id, data.spell_id], callback);
+};
+//////////////////////////////////////////////////////
+// Decrement active spell use
+///////////////////////////////////////////////////////
+module.exports.decrementSpellUse = (req, res, next) => {
+  const userId = res.locals.userId;
+
+  const SQL = `
+    UPDATE User
+    SET 
+      active_spell_uses = active_spell_uses - 1,
+      active_spell_id = CASE 
+        WHEN active_spell_uses - 1 <= 0 THEN NULL
+        ELSE active_spell_id
+      END
+    WHERE user_id = ?
+      AND active_spell_id IS NOT NULL;
+  `;
+
+  db.query(SQL, [userId], err => {
+    if (err) {
+      console.error("Spell use decrement error:", err);
+    }
+    next(); // NEVER block challenge completion
+  });
 };

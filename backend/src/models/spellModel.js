@@ -73,3 +73,20 @@ module.exports.searchBySkillpoints = (data, callback) => {
     `;
     pool.query(sql, [data.max_skillpoints], callback);
 };
+
+///////////////////////////////////////////////////////
+// Get spells owned by user
+///////////////////////////////////////////////////////
+module.exports.selectUserSpells = (data, callback) => {
+  const sql = `
+    SELECT 
+      s.spell_id,
+      s.name,
+      s.skillpoint_required,
+      us.acquired_at
+    FROM UserSpells us
+    JOIN SpellShop s ON us.spell_id = s.spell_id
+    WHERE us.user_id = ?;
+  `;
+  require("../services/db").query(sql, [data.user_id], callback);
+};

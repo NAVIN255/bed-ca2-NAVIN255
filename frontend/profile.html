@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Profile | Magical Wellness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <link rel="stylesheet" href="css/magical-theme.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="container header-content">
+    <a href="dashboard.html" class="logo">🔮 Magical Wellness</a>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><button id="logoutBtn" class="btn btn-secondary btn-sm">Logout</button></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="main-content">
+  <div class="container">
+
+    <!-- ===== PROFILE OVERVIEW ===== -->
+    <section class="card">
+      <h2>🧙‍♂️ Profile</h2>
+      <p><strong>Username:</strong> <span id="profileUsername">—</span></p>
+      <p><strong>Email:</strong> <span id="profileEmail">—</span></p>
+      <p><strong>Level:</strong> <span id="profileLevel">—</span></p>
+      <p><strong>Total Skillpoints:</strong> <span id="profilePoints">—</span></p>
+    </section>
+
+    <!-- ===== ACTIVE SPELL ===== -->
+    <section class="card">
+      <h2>🔮 Active Spell</h2>
+      <p id="activeSpellDisplay">No active spell</p>
+    </section>
+
+    <!-- ===== OWNED SPELLS ===== -->
+    <section class="card">
+      <h2>🪄 Owned Spells</h2>
+      <div id="ownedSpells" class="grid grid-3">
+        <p>Loading spells...</p>
+      </div>
+    </section>
+
+    <!-- ===== PROGRESS ===== -->
+    <section class="card">
+      <h2>🏆 Progress</h2>
+      <p><strong>Completed Challenges:</strong> <span id="completedCount">0</span></p>
+      <div id="badgeList" class="mt-2"></div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/services/APIService.js"></script>
+<script src="js/profile.js"></script>
+
+</body>
+</html>

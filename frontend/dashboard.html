@@ -17,11 +17,16 @@
   <div class="container">
     <div class="header-content">
       <a href="dashboard.html" class="logo">🔮 Magical Wellness</a>
+
       <nav>
         <ul class="nav-links">
           <li><button class="btn btn-link" onclick="showChallenges()">🎯 Challenges</button></li>
           <li><button class="btn btn-link" onclick="showGamificationSection()">🛒 Shop</button></li>
           <li><button class="btn btn-link" onclick="showProgressSection()">📊 Progress</button></li>
+
+          <!-- ✅ NEW -->
+          <li><a href="profile.html" class="btn btn-link">👤 Profile</a></li>
+
           <li><button id="logoutBtn" class="btn btn-secondary btn-sm">✨ Logout</button></li>
         </ul>
       </nav>
@@ -63,10 +68,21 @@
           <div class="stat-label">Active</div>
         </div>
 
+        <!-- 🔮 ACTIVE SPELL + USES -->
         <div class="stat-card">
           <div class="stat-icon">🔮</div>
-          <div class="stat-number" id="activeSpell">None</div>
+
+          <!-- JS will update this -->
+          <div class="stat-number" id="activeSpell">
+            None
+          </div>
+
           <div class="stat-label">Active Spell</div>
+
+          <!-- 🔥 Uses indicator -->
+          <div class="badge badge-info mt-1 hidden" id="activeSpellUses">
+            🔥 0 / 3
+          </div>
         </div>
 
       </div>
@@ -150,17 +166,15 @@
   </div>
 </div>
 
+<!-- ================= SCRIPTS ================= -->
+<script src="js/utils/domUtils.js"></script>
+<script src="js/utils/validation.js"></script>
+<script src="js/utils/formatUtils.js"></script>
+<script src="js/utils/errorHandler.js"></script>
 
-
-  <!-- ================= SCRIPTS ================= -->
-  <script src="js/utils/domUtils.js"></script>
-  <script src="js/utils/validation.js"></script>
-  <script src="js/utils/formatUtils.js"></script>
-  <script src="js/utils/errorHandler.js"></script>
-
-  <script src="js/services/APIService.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/dashboard-fixed.js"></script>
+<script src="js/services/APIService.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dashboard-fixed.js"></script>
 
 </body>
 </html>

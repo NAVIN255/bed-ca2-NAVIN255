@@ -8,7 +8,7 @@ const jwtMiddleware = require('../middleware/authMiddleware');
 router.use(jwtMiddleware.verifyToken);
 
 // ===============================
-// CURRENT USER
+// CURRENT USER (STEP 5)
 // ===============================
 router.get('/profile', userController.getProfile);
 
@@ -16,7 +16,6 @@ router.get('/profile', userController.getProfile);
 // ADMIN / GENERIC
 // ===============================
 router.get('/', userController.readAllUsers);
-router.get('/:user_id', userController.readUserById);
 router.put('/:user_id', userController.updateUserById);
 router.delete('/:user_id', userController.deleteUserById);
 

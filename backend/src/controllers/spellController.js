@@ -1,152 +1,97 @@
-const model = require("../models/spellModel");
+const spellModel = require("../models/spellModel");
+const db = require("../services/db");
 
 ///////////////////////////////////////////////////////
-// Controller: Read all spells
+// Read all spells
 ///////////////////////////////////////////////////////
-module.exports.readAllSpells = (req, res, next) =>
-{
-    const callback = (error, results) =>
-    {
-        if (error) {
-            console.error("Error readAllSpells:", error);
-            res.status(500).json(error);
-            return;
-        }
-
-        console.log("Spells retrieved:", results.length);
-        res.status(200).json(results);
-    };
-
-    model.selectAll(callback);
+module.exports.readAllSpells = (req, res) => {
+  spellModel.selectAll((err, results) => {
+    if (err) return res.status(500).json(err);
+    res.status(200).json(results);
+  });
 };
 
 ///////////////////////////////////////////////////////
-// Controller: Read spell by ID
+// Buy spell (deduct points + unlock)
 ///////////////////////////////////////////////////////
-module.exports.readSpellById = (req, res, next) =>
-{
-    const data = { spell_id: req.params.spell_id };
+module.exports.buySpell = (req, res) => {
+  const userId = res.locals.userId;
+  const { spell_id } = req.body;
 
-    const callback = (error, results) =>
-    {
-        if (error) {
-            console.error("Error readSpellById:", error);
-            res.status(500).json(error);
-            return;
+  if (!spell_id) {
+    return res.status(400).json({ message: "spell_id required" });
+  }
+
+  // 1️⃣ Get spell
+  spellModel.selectById({ spell_id }, (err, spells) => {
+    if (err) return res.status(500).json(err);
+    if (!spells.length) {
+      return res.status(404).json({ message: "Spell not found" });
+    }
+
+    const spell = spells[0];
+
+    // 2️⃣ Get user points
+    db.query(
+      "SELECT skillpoints FROM User WHERE user_id = ?",
+      [userId],
+      (err, users) => {
+        if (err) return res.status(500).json(err);
+
+        const points = users[0].skillpoints;
+
+        if (points < spell.skillpoint_required) {
+          return res.status(403).json({
+            message: "Not enough skillpoints"
+          });
         }
 
-        if (results.length === 0) {
-            res.status(404).json({ message: "Spell not found" });
-            return;
-        }
+        // 3️⃣ Deduct points + store ownership
+        db.query(
+          `
+          UPDATE User
+          SET skillpoints = skillpoints - ?
+          WHERE user_id = ?;
 
-        console.log("Spell found:", results[0]);
-        res.status(200).json(results[0]);
-    };
-
-    model.selectById(data, callback);
+          INSERT INTO UserSpells (user_id, spell_id)
+          VALUES (?, ?)
+          ON DUPLICATE KEY UPDATE acquired_at = CURRENT_TIMESTAMP;
+          `,
+          [spell.skillpoint_required, userId, userId, spell_id],
+          () => {
+            res.status(200).json({
+              message: "Spell purchased successfully",
+              remainingPoints: points - spell.skillpoint_required
+            });
+          }
+        );
+      }
+    );
+  });
 };
 
 ///////////////////////////////////////////////////////
-// Controller: Create a new spell
+// Activate spell (3 uses)
 ///////////////////////////////////////////////////////
-module.exports.createNewSpell = (req, res) =>
-{
-    const data = {
-        name: req.body.name,
-        skillpoint_required: req.body.skillpoint_required
-    };
+module.exports.activateSpell = (req, res) => {
+  const userId = res.locals.userId;
+  const { spell_id } = req.body;
 
-    model.insertSingle(data, (error, results) => {
-        if (error) {
-            console.error("Error createNewSpell:", error);
-            return res.status(500).json(error);
-        }
+  if (!spell_id) {
+    return res.status(400).json({ message: "spell_id required" });
+  }
 
-        res.status(201).json({
-            spell_id: results.insertId,
-            name: data.name,
-            skillpoint_required: data.skillpoint_required
-        });
+  const sql = `
+    UPDATE User
+    SET active_spell_id = ?, active_spell_uses = 3
+    WHERE user_id = ?;
+  `;
+
+  db.query(sql, [spell_id, userId], (err) => {
+    if (err) return res.status(500).json(err);
+
+    res.status(200).json({
+      message: "Spell activated (3 uses)"
     });
-};
-
-///////////////////////////////////////////////////////
-// Controller: Update spell
-///////////////////////////////////////////////////////
-module.exports.updateSpellById = (req, res, next) =>
-{
-    const data = {
-        spell_id: req.params.spell_id,
-        name: req.body.name,
-        skillpoint_required: req.body.skillpoint_required
-    };
-
-    const callback = (error, results) =>
-    {
-        if (error) {
-            console.error("Error updateSpellById:", error);
-            res.status(500).json(error);
-            return;
-        }
-
-        if (results.affectedRows === 0) {
-            res.status(404).json({ message: "Spell not found" });
-            return;
-        }
-
-        console.log("Spell updated:", data);
-        res.status(200).json({ message: "Spell updated successfully" });
-    };
-
-    model.updateById(data, callback);
-};
-
-///////////////////////////////////////////////////////
-// Controller: Delete spell
-///////////////////////////////////////////////////////
-module.exports.deleteSpellById = (req, res, next) =>
-{
-    const data = { spell_id: req.params.spell_id };
-
-    const callback = (error, results) =>
-    {
-        if (error) {
-            console.error("Error deleteSpellById:", error);
-            res.status(500).json(error);
-            return;
-        }
-
-        if (results.affectedRows === 0) {
-            res.status(404).json({ message: "Spell not found" });
-            return;
-        }
-
-        console.log("Spell deleted:", data.spell_id);
-        res.status(204).send();
-    };
-
-    model.deleteById(data, callback);
-};
-
-///////////////////////////////////////////////////////
-// Controller: Search spells by skillpoint requirement
-///////////////////////////////////////////////////////
-module.exports.searchSpellsBySkillpoints = (req, res, next) =>
-{
-    const data = { max_skillpoints: req.query.max || 1000 };
-
-    const callback = (error, results) =>
-    {
-        if (error) {
-            console.error("Error searchSpellsBySkillpoints:", error);
-            res.status(500).json(error);
-            return;
-        }
-
-        console.log("Spells found:", results.length);
-        res.status(200).json(results);
-    };
-
-    model.searchBySkillpoints(data, callback);
+  });
 };

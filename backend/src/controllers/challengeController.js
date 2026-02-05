@@ -1,5 +1,6 @@
+const pool = require("../services/db");
 const model = require("../models/challengeModel");
-
+const spellEffects = require("../configs/spellEffects");
 ///////////////////////////////////////////////////////
 // Controller to read all fitness challenges
 ///////////////////////////////////////////////////////
@@ -309,36 +310,21 @@ module.exports.readChallengeSkillpoints = (req, res, next) =>
 ///////////////////////////////////////////////////////
 // Controller to update user's skillpoints after completion
 ///////////////////////////////////////////////////////
-module.exports.updateUserSkillpoints = (req, res, next) =>
-{
-    let totalPoints;
+module.exports.updateUserSkillpoints = (req, res, next) => {
+  const data = {
+    user_id: res.locals.userId,
+    totalPoints: res.locals.totalPoints
+  };
 
-    if(req.body.completed === false){
-        totalPoints = res.locals.currentPoints + 5;
+  model.updateUserSkillpoints(data, (err) => {
+    if (err) {
+      console.error("Error updateUserSkillpoints:", err);
+      return res.status(500).json(err);
     }
-    else{
-        totalPoints = res.locals.currentPoints + res.locals.challengePoints;
-    }
 
-    const data = {
-        user_id: res.locals.userId,
-        totalPoints: totalPoints
-    };
-
-    const callback = (error, results, fields) =>
-    {
-        if(error){
-            console.error("Error updateUserSkillpoints:", error);
-            res.status(500).json(error);
-        }
-        else{
-            next();
-        }
-    };
-
-    model.updateUserSkillpoints(data, callback);
+    next();
+  });
 };
-
 ///////////////////////////////////////////////////////
 // Controller to read completion by completion ID
 ///////////////////////////////////////////////////////
@@ -435,4 +421,51 @@ module.exports.getCompletedCount = (req, res) => {
 
   require("../models/challengeModel")
     .countCompletedChallengesForUser(data, callback);
+};
+
+//////////////////////////////////////////////////////
+// Apply spell bonus (SAFE VERSION)
+//////////////////////////////////////////////////////
+module.exports.applySpellBonus = (req, res, next) => {
+  const userId = res.locals.userId;
+
+  // If no skillpoints loaded yet, skip
+  if (
+    res.locals.challengePoints === undefined ||
+    res.locals.currentPoints === undefined
+  ) {
+    return next();
+  }
+
+  const sql = `
+    SELECT s.skillpoint_required
+    FROM User u
+    LEFT JOIN SpellShop s ON u.active_spell_id = s.spell_id
+    WHERE u.user_id = ?;
+  `;
+
+  pool.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("Spell bonus error:", err);
+      return next(); // fail silently
+    }
+
+    // 🔮 Simple logic for now
+    let bonusMultiplier = 1;
+
+    if (results.length && results[0].skillpoint_required) {
+      bonusMultiplier = 1.2; // 20% bonus if spell active
+    }
+
+    const earned = Math.floor(
+      res.locals.challengePoints * bonusMultiplier
+    );
+
+    res.locals.totalPoints =
+      res.locals.currentPoints + earned;
+
+    res.locals.earnedPoints = earned;
+
+    next();
+  });
 };

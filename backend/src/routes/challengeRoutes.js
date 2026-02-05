@@ -41,10 +41,10 @@ router.post(
   challengeController.checkUserAndChallenge,
   challengeController.createNewCompletion,
   challengeController.readChallengeSkillpoints,
+  challengeController.applySpellBonus,   // ✅ now valid
   challengeController.updateUserSkillpoints,
   challengeController.readCompletionById
 );
-
 router.get(
   "/:challenge_id/completions",
   challengeController.readCompletionByChallengeId

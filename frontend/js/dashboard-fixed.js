@@ -1,21 +1,15 @@
 // ===============================
-// AUTH CHECK (MUST BE FIRST)
+// AUTH CHECK
 // ===============================
-if (!requireAuth()) {
-  // requireAuth handles redirect
+if (!localStorage.getItem("accessToken")) {
+  window.location.href = "index.html";
 }
 
 // ===============================
-// API SERVICE SETUP
+// API SETUP
 // ===============================
-let apiService = window.apiService;
-if (!apiService) {
-  apiService = new APIService();
-  window.apiService = apiService;
-}
-
+const apiService = new APIService();
 apiService.token = localStorage.getItem("accessToken");
-console.log("APIService token:", apiService.token ? "FOUND" : "MISSING");
 
 // ===============================
 // STATE
@@ -25,105 +19,186 @@ let currentChallenges = [];
 let userStats = {
   totalPoints: 0,
   completedChallenges: 0,
-  activeChallenges: 0
+  activeChallenges: 0,
+  level: 1,
+  badges: [],
+  activeSpellId: null,
+  activeSpellName: null
 };
-// ===============================
-// HELPER FUNCTIONS
-// ===============================
-function getDifficulty(points) {
-  if (points <= 10) return { level: "easy", text: "🌱 Easy" };
-  if (points <= 25) return { level: "medium", text: "⚡ Medium" };
-  return { level: "hard", text: "🔥 Hard" };
-}
-
-function updateStatsDisplay() {
-  document.getElementById("totalPoints").textContent = userStats.totalPoints;
-  document.getElementById("completedChallenges").textContent = userStats.completedChallenges;
-  document.getElementById("activeChallenges").textContent = userStats.activeChallenges;
-}
-
-function updateProgressUI() {
-  const weeklyGoal = 5;
-  const progress = Math.min(userStats.completedChallenges, weeklyGoal);
-  const percent = Math.round((progress / weeklyGoal) * 100);
-
-  const bar = document.querySelector(".progress-fill");
-  const text = document.querySelector(".progress-item p");
-
-  if (bar) bar.style.width = percent + "%";
-  if (text) text.textContent = `${percent}% complete (${progress}/${weeklyGoal} challenges)`;
-}
-
-function hideAllSections() {
-  document.querySelectorAll("section[id]").forEach(sec => {
-    sec.classList.add("hidden");
-  });
-}
 
 // ===============================
-// RENDER CHALLENGES
+// LEVEL CONFIG
 // ===============================
-function renderChallenges(challenges) {
-  const challengeList = document.getElementById("challengeList");
-
-  if (!challenges || challenges.length === 0) {
-    challengeList.innerHTML = `
-      <div class="card text-center">
-        <h3>No challenges yet 🎯</h3>
-        <button class="btn btn-primary" onclick="openCreateChallengeModal()">Create Challenge</button>
-        <button class="btn btn-secondary" onclick="createSampleChallenge()">Add Sample</button>
-      </div>
-    `;
-    return;
-  }
-
-  challengeList.innerHTML = challenges.map(challenge => {
-    const diff = getDifficulty(challenge.skillpoints);
-
-    return `
-      <div class="challenge-card">
-        <h4>${challenge.challenge}</h4>
-        <p>${challenge.skillpoints} points — ${diff.text}</p>
-        <button class="btn btn-success btn-sm"
-          onclick="completeChallenge(${challenge.challenge_id})">
-          Complete
-        </button>
-      </div>
-    `;
-  }).join("");
-}
+const LEVELS = [
+  { level: 1, required: 0 },
+  { level: 2, required: 200 },
+  { level: 3, required: 500 },
+  { level: 4, required: 1000 }
+];
 
 // ===============================
-// INITIALIZATION
+// INIT
 // ===============================
 document.addEventListener("DOMContentLoaded", initializeDashboard);
 
 async function initializeDashboard() {
-await loadUserProfile();
-await loadChallenges();
-await loadCompletedCount();
+  await loadUserProfile();
+  await loadChallenges();
+  await loadCompletedCount();
+  showChallenges(); // ✅ default view
 }
 
 // ===============================
-// USER INFO
+// USER PROFILE
 // ===============================
-async function loadUserInfo() {
-  const welcome = document.getElementById("welcome");
-  if (welcome) welcome.textContent = "Welcome back 👋";
-}
-
 async function loadUserProfile() {
   try {
     const profile = await apiService.getUserProfile();
 
     userStats.totalPoints = profile.skillpoints || 0;
+    userStats.activeSpellId = profile.active_spell_id || null;
+    userStats.activeSpellName = null; // resolved in loadSpells()
 
     updateStatsDisplay();
+    updateLevelProgress();
+    renderBadges();
+    updateActiveSpellDisplay();
+
   } catch (err) {
-    console.error("Failed to load user profile", err);
+    console.error("Failed to load profile:", err);
   }
 }
 
+// ===============================
+// STATS
+// ===============================
+function updateStatsDisplay() {
+  document.getElementById("totalPoints").textContent =
+    userStats.totalPoints;
+
+  document.getElementById("completedChallenges").textContent =
+    userStats.completedChallenges;
+
+  document.getElementById("activeChallenges").textContent =
+    userStats.activeChallenges;
+}
+
+function updateActiveSpellDisplay() {
+  const el = document.getElementById("activeSpell");
+  if (!el) return;
+
+  el.textContent = userStats.activeSpellName || "None";
+}
+
+// ===============================
+// LEVEL + BADGES
+// ===============================
+function updateLevelProgress() {
+  let currentLevel = LEVELS[0];
+  let nextLevel = LEVELS[1];
+
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (userStats.totalPoints >= LEVELS[i].required) {
+      currentLevel = LEVELS[i];
+      nextLevel = LEVELS[i + 1] || null;
+    }
+  }
+
+  const bar = document.getElementById("levelProgressBar");
+  const text = document.getElementById("levelProgressText");
+  if (!bar || !text) return;
+
+  if (!nextLevel) {
+    bar.style.width = "100%";
+    text.textContent = "Max level reached";
+    return;
+  }
+
+  const progress =
+    ((userStats.totalPoints - currentLevel.required) /
+      (nextLevel.required - currentLevel.required)) * 100;
+
+  bar.style.width = `${Math.round(progress)}%`;
+  text.textContent =
+    `${userStats.totalPoints} / ${nextLevel.required} points to Level ${nextLevel.level}`;
+}
+
+function renderBadges() {
+  const badgeList = document.getElementById("badgeList");
+  if (!badgeList) return;
+
+  if (!userStats.badges.length) {
+    badgeList.innerHTML =
+      "<span class='badge badge-info'>No badges yet</span>";
+    return;
+  }
+
+  badgeList.innerHTML = userStats.badges
+    .map(b => `<span class="badge badge-success">${b}</span>`)
+    .join(" ");
+}
+
+// ===============================
+// CHALLENGES
+// ===============================
+async function loadChallenges() {
+  try {
+    currentChallenges = await apiService.getChallenges();
+    userStats.activeChallenges = currentChallenges.length;
+    updateStatsDisplay();
+    renderChallenges();
+  } catch (err) {
+    console.error("Load challenges error:", err);
+  }
+}
+
+function renderChallenges() {
+  const list = document.getElementById("challengeList");
+  if (!list) return;
+
+  if (!currentChallenges.length) {
+    list.innerHTML = "<p>No active challenges</p>";
+    return;
+  }
+
+  list.innerHTML = currentChallenges.map(c => `
+    <div class="challenge-card">
+      <h4>${c.challenge}</h4>
+      <p>${c.skillpoints} points</p>
+      <button class="btn btn-success btn-sm"
+        onclick="completeChallenge(${c.challenge_id})">
+        Complete
+      </button>
+    </div>
+  `).join("");
+}
+
+async function completeChallenge(id) {
+  try {
+    await apiService.completeChallenge(id, {
+      completed: true,
+      review_amt: 5,
+      notes: "Completed"
+    });
+
+    await loadUserProfile();
+    await loadChallenges();
+    await loadCompletedCount();
+
+    alert("🎉 Challenge completed!");
+
+  } catch (err) {
+    if (err.message?.includes("already")) {
+      await loadChallenges();
+      return;
+    }
+    alert("Failed to complete challenge");
+  }
+}
+
+// ===============================
+// COMPLETED COUNT
+// ===============================
 async function loadCompletedCount() {
   try {
     const res = await apiService.makeAuthenticatedRequest(
@@ -131,125 +206,147 @@ async function loadCompletedCount() {
       { method: "GET" }
     );
 
-    userStats.completedChallenges = res.completedChallenges || 0;
+    userStats.completedChallenges =
+      res.completedChallenges || 0;
+
     updateStatsDisplay();
-    updateProgressUI();
 
   } catch (err) {
-    console.error("Failed to load completed count", err);
+    console.error("Completed count error:", err);
   }
 }
+
 // ===============================
-// LOAD CHALLENGES
+// SPELL SHOP
 // ===============================
-async function loadChallenges() {
+async function loadSpells() {
   try {
-    const challenges = await apiService.getChallenges();
+    const spells = await apiService.getSpells();
+    const shop = document.getElementById("shopContent");
+    if (!shop) return;
 
-    currentChallenges = Array.isArray(challenges) ? challenges : [];
+    shop.innerHTML = spells.map(spell => {
+      const isActive =
+        spell.spell_id === userStats.activeSpellId;
 
-    userStats.activeChallenges = currentChallenges.length;
+      const canAfford =
+        userStats.totalPoints >= spell.skillpoint_required;
 
-    updateStatsDisplay();
-    renderChallenges(currentChallenges);
+      if (isActive) {
+        userStats.activeSpellName = spell.name;
+      }
+
+      let buttonText = "Activate";
+      let disabled = false;
+
+      if (isActive) {
+        buttonText = "✅ Active";
+        disabled = true;
+      } else if (!canAfford) {
+        buttonText = "❌ Not enough points";
+        disabled = true;
+      }
+
+      return `
+        <div class="card">
+          <h4>🔮 ${spell.name}</h4>
+          <p>Cost: ${spell.skillpoint_required} points</p>
+          <button class="btn btn-primary btn-sm"
+            ${disabled ? "disabled" : ""}
+            onclick="activateSpell(${spell.spell_id})">
+            ${buttonText}
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    updateActiveSpellDisplay();
 
   } catch (err) {
-    console.error("Load challenges error:", err);
+    console.error("Load spells error:", err);
   }
 }
 
+async function activateSpell(id) {
+  try {
+    await apiService.makeAuthenticatedRequest("/spells/activate", {
+      method: "POST",
+      body: JSON.stringify({ spell_id: id })
+    });
+
+    alert("🔮 Spell activated!");
+
+    await loadUserProfile();
+    await loadSpells();
+
+  } catch (err) {
+    alert(err.message || "Failed to activate spell");
+  }
+}
 
 // ===============================
-// CREATE CHALLENGE
+// UI NAVIGATION
+// ===============================
+function hideAllSections() {
+  document
+    .querySelectorAll("section[id]")
+    .forEach(s => s.classList.add("hidden"));
+}
+
+window.showChallenges = () => {
+  hideAllSections();
+  document.getElementById("challenges")
+    ?.classList.remove("hidden");
+};
+
+window.showGamificationSection = () => {
+  hideAllSections();
+  document.getElementById("gamification")
+    ?.classList.remove("hidden");
+  loadSpells();
+};
+
+window.showProgressSection = () => {
+  hideAllSections();
+  document.getElementById("progress")
+    ?.classList.remove("hidden");
+};
+
+// ===============================
+// CREATE CHALLENGE MODAL
 // ===============================
 window.openCreateChallengeModal = () =>
-  document.getElementById("createChallengeModal").classList.add("show");
+  document.getElementById("createChallengeModal")
+    ?.classList.add("show");
 
 window.closeCreateChallengeModal = () =>
-  document.getElementById("createChallengeModal").classList.remove("show");
+  document.getElementById("createChallengeModal")
+    ?.classList.remove("show");
 
 window.createChallenge = async () => {
-  const form = document.getElementById("createChallengeForm");
-  const data = Object.fromEntries(new FormData(form));
+  const form =
+    document.getElementById("createChallengeForm");
 
-  if (!data.challenge || data.challenge.length < 5) {
-    alert("Challenge too short");
-    return;
-  }
+  const data =
+    Object.fromEntries(new FormData(form));
 
-  data.skillpoints = Number(data.skillpoints);
+  await apiService.createChallenge({
+    challenge: data.challenge,
+    skillpoints: Number(data.skillpoints)
+  });
 
-  await apiService.createChallenge(data);
   closeCreateChallengeModal();
   loadChallenges();
 };
 
 // ===============================
-// SAMPLE CHALLENGE
-// ===============================
-window.createSampleChallenge = async () => {
-  await apiService.createChallenge({
-    challenge: "Walk 10,000 steps today",
-    skillpoints: 10
-  });
-  loadChallenges();
-};
-
-// ===============================
-// COMPLETE CHALLENGE
-// ===============================
-window.completeChallenge = async (id) => {
-  try {
-    await apiService.completeChallenge(id, {
-      completed: true,
-      review_amt: 5,
-      notes: "Challenge completed"
-    });
-
-    // 🔁 Reload everything from backend (single source of truth)
-    await loadUserProfile();
-    await loadChallenges();
-
-    alert("🎉 Challenge completed!");
-
-  } catch (err) {
-    if (err.message.includes("already")) {
-      // Still reload to stay in sync
-      await loadChallenges();
-      return;
-    }
-
-    console.error("Complete challenge error:", err);
-    alert("Failed to complete challenge");
-  }
-};
-// ===============================
-// NAVIGATION
-// ===============================
-window.showGamificationSection = () => {
-  hideAllSections();
-  document.getElementById("gamification").classList.remove("hidden");
-
-  document.getElementById("shopContent").innerHTML = `
-    <div class="grid grid-3">
-      <div class="card"><h4>🔮 Focus Spell</h4><p>50 points</p></div>
-      <div class="card"><h4>💚 Energy Potion</h4><p>75 points</p></div>
-      <div class="card"><h4>💎 Wellness Crystal</h4><p>100 points</p></div>
-    </div>
-  `;
-};
-
-window.showProgressSection = () => {
-  hideAllSections();
-  document.getElementById("progress").classList.remove("hidden");
-};
-
-// ===============================
 // LOGOUT
 // ===============================
-document.getElementById("logoutBtn")?.addEventListener("click", () => {
-  localStorage.clear();
-  window.location.href = "index.html";
-});
+document
+  .getElementById("logoutBtn")
+  ?.addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "index.html";
+  });
 
-console.log("Dashboard JS ready ✅");
+console.log("🔥 Dashboard fully loaded (A+ build)");

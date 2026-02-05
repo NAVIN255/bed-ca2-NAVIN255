@@ -178,3 +178,27 @@ module.exports.bulkUpdateMagicExp = (req, res, next) =>
 
     model.bulkUpdateMagicExp(data, callback);
 };
+
+
+module.exports.activateSpell = (req, res) => {
+  const userId = res.locals.userId;
+  const { spell_id } = req.body;
+
+  if (!spell_id) {
+    return res.status(400).json({ message: "spell_id required" });
+  }
+
+  const sql = `
+    UPDATE User
+    SET active_spell_id = ?
+    WHERE user_id = ?;
+  `;
+
+  require("../services/db").query(sql, [spell_id, userId], (err) => {
+    if (err) return res.status(500).json(err);
+
+    res.status(200).json({
+      message: "Spell activated"
+    });
+  });
+};

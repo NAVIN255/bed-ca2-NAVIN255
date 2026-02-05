@@ -1,19 +1,23 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const spellController = require('../controllers/spellController');
-const jwtMiddleware = require('../middleware/authMiddleware');
+const spellController = require("../controllers/spellController");
+const jwtMiddleware = require("../middleware/authMiddleware");
 
+// 🔐 Protect all spell routes
 router.use(jwtMiddleware.verifyToken);
 
-// Search by skillpoints
-router.get('/search/skillpoints', spellController.searchSpellsBySkillpoints);
+// ===============================
+// SPELL SHOP
+// ===============================
 
+// View all spells
+router.get("/", spellController.readAllSpells);
 
-router.get('/', spellController.readAllSpells);
-router.get('/:spell_id', spellController.readSpellById);
-router.post('/', spellController.createNewSpell);
-router.put('/:spell_id', spellController.updateSpellById);
-router.delete('/:spell_id', spellController.deleteSpellById);
+// Buy spell (deduct points)
+router.post("/buy", spellController.buySpell);
+
+// Activate spell (3 uses)
+router.post("/activate", spellController.activateSpell);
 
 module.exports = router;

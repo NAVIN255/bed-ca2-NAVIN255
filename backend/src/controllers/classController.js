@@ -179,3 +179,56 @@ module.exports.removeEnrollment = (req, res, next) => {
     }
     model.deleteEnrollment(data, callback);
 };
+
+module.exports.applySpellBonus = (req, res, next) => {
+  const userId = res.locals.userId;
+
+  // Safety check
+  if (
+    res.locals.challengePoints === undefined ||
+    res.locals.currentPoints === undefined
+  ) {
+    return next();
+  }
+
+  const sql = `
+    SELECT active_spell_id, active_spell_uses
+    FROM User
+    WHERE user_id = ?;
+  `;
+
+  pool.query(sql, [userId], (err, results) => {
+    if (err || !results.length) return next();
+
+    let { active_spell_id, active_spell_uses } = results[0];
+
+    let bonusMultiplier = 1;
+    let usesLeft = active_spell_uses;
+
+    // 🔮 Apply spell bonus if active
+    if (active_spell_id && active_spell_uses > 0) {
+      bonusMultiplier = 1.2; // 20% bonus
+      usesLeft -= 1;
+    }
+
+    const earned = Math.floor(
+      res.locals.challengePoints * bonusMultiplier
+    );
+
+    res.locals.totalPoints =
+      res.locals.currentPoints + earned;
+
+    res.locals.earnedPoints = earned;
+
+    // 🔥 Update spell usage
+    const updateSql =
+      usesLeft > 0
+        ? `UPDATE User SET active_spell_uses = ? WHERE user_id = ?`
+        : `UPDATE User SET active_spell_id = NULL, active_spell_uses = 0 WHERE user_id = ?`;
+
+    const params =
+      usesLeft > 0 ? [usesLeft, userId] : [userId];
+
+    pool.query(updateSql, params, () => next());
+  });
+};

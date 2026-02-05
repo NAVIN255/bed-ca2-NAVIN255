@@ -45,9 +45,14 @@ module.exports.selectAll = (callback) => {
 
 module.exports.readUserById = (data, callback) => {
   const SQL = `
-    SELECT user_id, username, email, skillpoints
-    FROM User
-    WHERE user_id = ?;
+    SELECT 
+  user_id,
+  username,
+  email,
+  skillpoints,
+  active_spell_id
+FROM User
+WHERE user_id = ?;
   `;
   db.query(SQL, [data.user_id], callback);
 };
@@ -71,4 +76,79 @@ module.exports.deleteUserById = (data, callback) => {
     [data.user_id],
     callback
   );
+};
+
+///////////////////////////////////////////////////////
+// Set active spell for user
+///////////////////////////////////////////////////////
+module.exports.setActiveSpell = (data, callback) => {
+  const SQL = `
+    UPDATE User
+    SET active_spell_id = ?
+    WHERE user_id = ?;
+  `;
+  const VALUES = [data.spell_id, data.user_id];
+
+  db.query(SQL, VALUES, callback);
+};
+
+///////////////////////////////////////////////////////
+// Get user's active spell
+///////////////////////////////////////////////////////
+module.exports.getActiveSpell = (data, callback) => {
+  const SQL = `
+    SELECT s.*
+    FROM SpellShop s
+    JOIN User u ON u.active_spell_id = s.spell_id
+    WHERE u.user_id = ?;
+  `;
+
+  db.query(SQL, [data.user_id], callback);
+};
+
+///////////////////////////////////////////////////////
+// Get user's current skillpoints
+///////////////////////////////////////////////////////
+module.exports.getUserSkillpoints = (data, callback) => {
+  const SQL = `
+    SELECT skillpoints
+    FROM User
+    WHERE user_id = ?;
+  `;
+  db.query(SQL, [data.user_id], callback);
+};
+
+///////////////////////////////////////////////////////
+// Deduct skillpoints from user
+///////////////////////////////////////////////////////
+module.exports.deductSkillpoints = (data, callback) => {
+  const SQL = `
+    UPDATE User
+    SET skillpoints = skillpoints - ?
+    WHERE user_id = ?;
+  `;
+  db.query(SQL, [data.cost, data.user_id], callback);
+};
+
+///////////////////////////////////////////////////////
+// Add spell to user's owned spells
+///////////////////////////////////////////////////////
+module.exports.addUserSpell = (data, callback) => {
+  const SQL = `
+    INSERT INTO UserSpells (user_id, spell_id)
+    VALUES (?, ?);
+  `;
+  db.query(SQL, [data.user_id, data.spell_id], callback);
+};
+
+///////////////////////////////////////////////////////
+// Check if user already owns a spell
+///////////////////////////////////////////////////////
+module.exports.checkUserOwnsSpell = (data, callback) => {
+  const SQL = `
+    SELECT user_spell_id
+    FROM UserSpells
+    WHERE user_id = ? AND spell_id = ?;
+  `;
+  db.query(SQL, [data.user_id, data.spell_id], callback);
 };

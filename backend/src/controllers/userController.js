@@ -1,5 +1,24 @@
 const model = require("../models/userModels");
 
+
+///////////////////////////////////////////////////////
+// GAMIFICATION HELPERS
+///////////////////////////////////////////////////////
+const calculateLevel = (points) => {
+  return Math.floor(points / 100) + 1;
+};
+
+const calculateBadges = (points) => {
+  const badges = [];
+
+  if (points >= 50) badges.push("Beginner");
+  if (points >= 150) badges.push("Consistent");
+  if (points >= 300) badges.push("Challenger");
+  if (points >= 600) badges.push("Wellness Master");
+
+  return badges;
+};
+
 ///////////////////////////////////////////////////////
 // Controller: User Login
 ///////////////////////////////////////////////////////
@@ -113,32 +132,7 @@ module.exports.readAllUsers = (req, res, next) =>
     model.selectAll(callback);
 };
 
-///////////////////////////////////////////////////////
-// Controller: Read User By ID
-///////////////////////////////////////////////////////
-module.exports.readUserById = (req, res, next) =>
-{
-    const data = {
-        id: req.params.user_id // ✅ USE PARAMS
-    };
 
-    const callback = (error, results) =>
-    {
-        if (error) {
-            return res.status(500).json(error);
-        }
-
-        if (results.length === 0) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-        res.status(200).json(results[0]); // ✅ return object, not array
-    };
-
-    model.selectById(data, callback);
-};
 ///////////////////////////////////////////////////////
 // Controller: Update User By ID
 ///////////////////////////////////////////////////////
@@ -207,28 +201,8 @@ module.exports.deleteUserById = (req, res, next) => {
     model.deleteUserById(data, callback);
 };
 
-module.exports.getMyProfile = (req, res) => {
-  const userId = res.locals.userId;
-
-  const callback = (error, results) => {
-    if (error) {
-      console.error("Error getMyProfile:", error);
-      return res.status(500).json({ message: "Server error" });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json(results[0]);
-  };
-
-  require("../models/userModel").selectById({ user_id: userId }, callback);
-};
-
-
-///////////////////////////////////////////////////////
-// Controller: Get current user profile
+////////////////////////////////////////////////////////
+// Controller: Get current user profile (WITH LEVELS & BADGES)
 ///////////////////////////////////////////////////////
 module.exports.getProfile = (req, res) => {
   const data = {
@@ -245,6 +219,13 @@ module.exports.getProfile = (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(results[0]);
+    const user = results[0];
+    const points = user.skillpoints || 0;
+
+    res.status(200).json({
+      ...user,
+      level: calculateLevel(points),
+      badges: calculateBadges(points)
+    });
   });
 };

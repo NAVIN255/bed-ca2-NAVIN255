@@ -229,23 +229,3 @@ module.exports.getProfile = (req, res) => {
     });
   });
 };
-
-///////////////////////////////////////////////////////
-// Read full profile (with spells)
-///////////////////////////////////////////////////////
-module.exports.readFullProfile = (data, callback) => {
-  const sql = `
-    SELECT 
-      u.user_id,
-      u.username,
-      u.email,
-      u.skillpoints,
-      u.active_spell_id,
-      u.active_spell_uses,
-      s.name AS active_spell_name
-    FROM User u
-    LEFT JOIN SpellShop s ON u.active_spell_id = s.spell_id
-    WHERE u.user_id = ?;
-  `;
-  require("../services/db").query(sql, [data.user_id], callback);
-};
